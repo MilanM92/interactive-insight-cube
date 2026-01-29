@@ -8,7 +8,10 @@ interface GearProps {
   isExploded: boolean;
   color: string;
   isSelected: boolean;
+  isMoving: boolean;
   onClick: () => void;
+  onDoubleClick: () => void;
+  positionOffset: [number, number, number];
   wearLevel?: number;
   isVisible: boolean;
   radius?: number;
@@ -99,7 +102,10 @@ const GearComponent = ({
   isExploded,
   color,
   isSelected,
+  isMoving,
   onClick,
+  onDoubleClick,
+  positionOffset,
   wearLevel = 0,
   isVisible,
   radius = 1,
@@ -116,8 +122,13 @@ const GearComponent = ({
   }, [radius, teeth, thickness]);
 
   const targetPos = useMemo(() => {
-    return isExploded ? explodedPosition : position;
-  }, [isExploded, explodedPosition, position]);
+    const base = isExploded ? explodedPosition : position;
+    return [
+      base[0] + positionOffset[0],
+      base[1] + positionOffset[1],
+      base[2] + positionOffset[2],
+    ] as [number, number, number];
+  }, [isExploded, explodedPosition, position, positionOffset]);
 
   const displayColor = useMemo(() => {
     if (wearLevel > 0.7) return '#ef4444';
@@ -140,8 +151,11 @@ const GearComponent = ({
       else meshRef.current.rotation.z += speed;
     }
 
-    // Selection pulse effect
-    if (isSelected) {
+    // Selection/Moving pulse effect
+    if (isMoving) {
+      const scale = 1 + Math.sin(Date.now() * 0.008) * 0.05;
+      meshRef.current.scale.setScalar(scale);
+    } else if (isSelected) {
       const scale = 1 + Math.sin(Date.now() * 0.005) * 0.03;
       meshRef.current.scale.setScalar(scale);
     } else {
@@ -161,6 +175,10 @@ const GearComponent = ({
         e.stopPropagation();
         onClick();
       }}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        onDoubleClick();
+      }}
       onPointerOver={() => {
         document.body.style.cursor = 'pointer';
       }}
@@ -172,8 +190,8 @@ const GearComponent = ({
         color={displayColor}
         metalness={0.8}
         roughness={0.2}
-        emissive={isSelected ? displayColor : '#000000'}
-        emissiveIntensity={isSelected ? 0.4 : 0}
+        emissive={isMoving ? '#22d3ee' : isSelected ? displayColor : '#000000'}
+        emissiveIntensity={isMoving ? 0.6 : isSelected ? 0.4 : 0}
       />
     </mesh>
   );
@@ -186,7 +204,10 @@ interface ShaftProps {
   isExploded: boolean;
   color: string;
   isSelected: boolean;
+  isMoving: boolean;
   onClick: () => void;
+  onDoubleClick: () => void;
+  positionOffset: [number, number, number];
   isVisible: boolean;
   length?: number;
   radius?: number;
@@ -198,7 +219,10 @@ const ShaftComponent = ({
   isExploded,
   color,
   isSelected,
+  isMoving,
   onClick,
+  onDoubleClick,
+  positionOffset,
   isVisible,
   length = 2,
   radius = 0.1,
@@ -207,8 +231,13 @@ const ShaftComponent = ({
   const currentPos = useRef(new THREE.Vector3(...position));
 
   const targetPos = useMemo(() => {
-    return isExploded ? explodedPosition : position;
-  }, [isExploded, explodedPosition, position]);
+    const base = isExploded ? explodedPosition : position;
+    return [
+      base[0] + positionOffset[0],
+      base[1] + positionOffset[1],
+      base[2] + positionOffset[2],
+    ] as [number, number, number];
+  }, [isExploded, explodedPosition, position, positionOffset]);
 
   useFrame((state, delta) => {
     if (!meshRef.current) return;
@@ -219,7 +248,10 @@ const ShaftComponent = ({
       meshRef.current.rotation.y += delta * 0.5;
     }
 
-    if (isSelected) {
+    if (isMoving) {
+      const scale = 1 + Math.sin(Date.now() * 0.008) * 0.05;
+      meshRef.current.scale.set(scale, 1, scale);
+    } else if (isSelected) {
       const scale = 1 + Math.sin(Date.now() * 0.005) * 0.03;
       meshRef.current.scale.set(scale, 1, scale);
     }
@@ -236,6 +268,10 @@ const ShaftComponent = ({
         e.stopPropagation();
         onClick();
       }}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        onDoubleClick();
+      }}
       onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
       onPointerOut={() => { document.body.style.cursor = 'auto'; }}
     >
@@ -244,8 +280,8 @@ const ShaftComponent = ({
         color={color}
         metalness={0.9}
         roughness={0.1}
-        emissive={isSelected ? color : '#000000'}
-        emissiveIntensity={isSelected ? 0.3 : 0}
+        emissive={isMoving ? '#22d3ee' : isSelected ? color : '#000000'}
+        emissiveIntensity={isMoving ? 0.6 : isSelected ? 0.3 : 0}
       />
     </mesh>
   );
@@ -258,7 +294,10 @@ interface HousingProps {
   isExploded: boolean;
   color: string;
   isSelected: boolean;
+  isMoving: boolean;
   onClick: () => void;
+  onDoubleClick: () => void;
+  positionOffset: [number, number, number];
   isVisible: boolean;
 }
 
@@ -268,22 +307,33 @@ const HousingComponent = ({
   isExploded,
   color,
   isSelected,
+  isMoving,
   onClick,
+  onDoubleClick,
+  positionOffset,
   isVisible,
 }: HousingProps) => {
   const meshRef = useRef<THREE.Group>(null);
   const currentPos = useRef(new THREE.Vector3(...position));
 
   const targetPos = useMemo(() => {
-    return isExploded ? explodedPosition : position;
-  }, [isExploded, explodedPosition, position]);
+    const base = isExploded ? explodedPosition : position;
+    return [
+      base[0] + positionOffset[0],
+      base[1] + positionOffset[1],
+      base[2] + positionOffset[2],
+    ] as [number, number, number];
+  }, [isExploded, explodedPosition, position, positionOffset]);
 
   useFrame((_, delta) => {
     if (!meshRef.current) return;
     currentPos.current.lerp(new THREE.Vector3(...targetPos), delta * 5);
     meshRef.current.position.copy(currentPos.current);
 
-    if (isSelected) {
+    if (isMoving) {
+      const scale = 1 + Math.sin(Date.now() * 0.008) * 0.04;
+      meshRef.current.scale.setScalar(scale);
+    } else if (isSelected) {
       const scale = 1 + Math.sin(Date.now() * 0.005) * 0.02;
       meshRef.current.scale.setScalar(scale);
     } else {
@@ -301,6 +351,10 @@ const HousingComponent = ({
         e.stopPropagation();
         onClick();
       }}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        onDoubleClick();
+      }}
       onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
       onPointerOut={() => { document.body.style.cursor = 'auto'; }}
     >
@@ -311,8 +365,8 @@ const HousingComponent = ({
           color={color}
           metalness={0.7}
           roughness={0.3}
-          emissive={isSelected ? color : '#000000'}
-          emissiveIntensity={isSelected ? 0.2 : 0}
+          emissive={isMoving ? '#22d3ee' : isSelected ? color : '#000000'}
+          emissiveIntensity={isMoving ? 0.5 : isSelected ? 0.2 : 0}
           transparent
           opacity={0.9}
         />
@@ -345,6 +399,9 @@ interface GearMachineProps {
   onSelectComponent: (id: string | null) => void;
   componentWear: Record<string, number>;
   visibleComponents: Record<string, boolean>;
+  movingComponent: string | null;
+  onDoubleClick: (id: string) => void;
+  componentOffsets: Record<string, [number, number, number]>;
 }
 
 export const machineComponents: ComponentData[] = [
@@ -434,6 +491,9 @@ const GearMachine = ({
   onSelectComponent,
   componentWear,
   visibleComponents,
+  movingComponent,
+  onDoubleClick,
+  componentOffsets,
 }: GearMachineProps) => {
   const groupRef = useRef<THREE.Group>(null);
 
@@ -447,7 +507,10 @@ const GearMachine = ({
           isExploded,
           color: component.color,
           isSelected: selectedComponent === component.id,
+          isMoving: movingComponent === component.id,
           onClick: () => onSelectComponent(selectedComponent === component.id ? null : component.id),
+          onDoubleClick: () => onDoubleClick(component.id),
+          positionOffset: componentOffsets[component.id] || [0, 0, 0] as [number, number, number],
           isVisible: visibleComponents[component.id] !== false,
         };
 
