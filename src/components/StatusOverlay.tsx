@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { machineComponents } from './CarModel';
-import { Car, DoorOpen, Gauge, Thermometer } from 'lucide-react';
+import { machineComponents } from './PlantModel';
+import { Leaf, Droplets, Sun, Thermometer } from 'lucide-react';
 
 interface StatusOverlayProps {
   selectedComponent: string | null;
@@ -8,12 +8,8 @@ interface StatusOverlayProps {
   movingComponent?: string | null;
 }
 
-const StatusOverlay = ({ selectedComponent, openParts, movingComponent }: StatusOverlayProps) => {
-  const selectedData = machineComponents.find(c => c.id === selectedComponent);
-  
-  // Count open doors/hatches
-  const openableComponents = machineComponents.filter(c => c.type === 'door' || c.type === 'hatch');
-  const openCount = openableComponents.filter(c => openParts[c.id]).length;
+const StatusOverlay = ({ selectedComponent, movingComponent }: StatusOverlayProps) => {
+  const isSelected = selectedComponent === 'plant-full';
 
   return (
     <>
@@ -24,7 +20,7 @@ const StatusOverlay = ({ selectedComponent, openParts, movingComponent }: Status
         className="absolute top-6 left-6 z-10"
       >
         <h1 className="text-2xl font-bold text-foreground text-glow mb-1">
-          Car Assembly
+          Indoor Plant
         </h1>
         <p className="text-sm text-muted-foreground">
           Interactive 3D Explorer
@@ -40,8 +36,8 @@ const StatusOverlay = ({ selectedComponent, openParts, movingComponent }: Status
       >
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-              <Car className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+              <Leaf className="w-5 h-5 text-emerald-400" />
             </div>
             <div>
               <p className="dashboard-label">Parts</p>
@@ -52,14 +48,12 @@ const StatusOverlay = ({ selectedComponent, openParts, movingComponent }: Status
           <div className="w-px h-10 bg-border" />
 
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-              <DoorOpen className="w-5 h-5 text-emerald-400" />
+            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+              <Droplets className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <p className="dashboard-label">Open Parts</p>
-              <p className="dashboard-value text-emerald-400">
-                {openCount}/{openableComponents.length}
-              </p>
+              <p className="dashboard-label">Watering</p>
+              <p className="dashboard-value text-blue-400">Weekly</p>
             </div>
           </div>
 
@@ -67,30 +61,30 @@ const StatusOverlay = ({ selectedComponent, openParts, movingComponent }: Status
 
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
-              <Thermometer className="w-5 h-5 text-amber-400" />
+              <Sun className="w-5 h-5 text-amber-400" />
             </div>
             <div>
-              <p className="dashboard-label">Engine</p>
-              <p className="dashboard-value text-foreground">Ready</p>
+              <p className="dashboard-label">Light</p>
+              <p className="dashboard-value text-amber-400">Indirect</p>
             </div>
           </div>
 
           <div className="w-px h-10 bg-border" />
 
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-              <Gauge className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 rounded-lg bg-rose-500/20 flex items-center justify-center">
+              <Thermometer className="w-5 h-5 text-rose-400" />
             </div>
             <div>
-              <p className="dashboard-label">Speed</p>
-              <p className="dashboard-value text-foreground">0 km/h</p>
+              <p className="dashboard-label">Temp</p>
+              <p className="dashboard-value text-foreground">18-24°C</p>
             </div>
           </div>
         </div>
       </motion.div>
 
       {/* Selected Component Info */}
-      {selectedData && (
+      {isSelected && (
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -98,16 +92,15 @@ const StatusOverlay = ({ selectedComponent, openParts, movingComponent }: Status
           className="absolute bottom-6 left-6 z-10 glass-panel p-4 max-w-xs"
         >
           <div className="flex items-center gap-3 mb-2">
-            <div
-              className="w-4 h-4 rounded"
-              style={{ backgroundColor: selectedData.color }}
-            />
-            <span className="font-semibold text-foreground">{selectedData.name}</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground capitalize">
-              {selectedData.type}
+            <div className="w-4 h-4 rounded bg-emerald-500" />
+            <span className="font-semibold text-foreground">Indoor Plant</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+              Full Model
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">{selectedData.description}</p>
+          <p className="text-sm text-muted-foreground">
+            Beautiful indoor plant with ceramic pot, nutrient-rich soil, and healthy green foliage.
+          </p>
         </motion.div>
       )}
 
@@ -120,8 +113,8 @@ const StatusOverlay = ({ selectedComponent, openParts, movingComponent }: Status
           className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10"
         >
           <div className="interactive-hint glass-panel px-4 py-2">
-            <span className="animate-pulse text-primary">●</span>
-            <span>Drag to rotate • Scroll to zoom • Click to inspect • Double-click to move • Open doors/trunk</span>
+            <span className="animate-pulse text-emerald-400">●</span>
+            <span>Drag to rotate • Scroll to zoom • Click to inspect • Double-click to move</span>
           </div>
         </motion.div>
       )}
