@@ -12,6 +12,7 @@ interface Scene3DProps {
   movingComponent: string | null;
   onDoubleClick: (id: string) => void;
   componentOffsets: Record<string, [number, number, number]>;
+  componentRotations: Record<string, [number, number, number]>;
 }
 
 const Scene3D = ({
@@ -24,6 +25,7 @@ const Scene3D = ({
   movingComponent,
   onDoubleClick,
   componentOffsets,
+  componentRotations,
 }: Scene3DProps) => {
   return (
     <Canvas
@@ -70,6 +72,7 @@ const Scene3D = ({
           movingComponent={movingComponent}
           onDoubleClick={onDoubleClick}
           componentOffsets={componentOffsets}
+          componentRotations={componentRotations}
         />
       </Float>
 
