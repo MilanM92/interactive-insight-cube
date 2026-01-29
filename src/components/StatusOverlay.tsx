@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { cubeComponents } from './InteractiveCube';
-import { Box, Activity, ThermometerSun, Gauge } from 'lucide-react';
+import { machineComponents } from './GearMachine';
+import { Cog, Activity, ThermometerSun, Gauge } from 'lucide-react';
 
 interface StatusOverlayProps {
   selectedComponent: string | null;
@@ -8,11 +8,12 @@ interface StatusOverlayProps {
 }
 
 const StatusOverlay = ({ selectedComponent, componentWear }: StatusOverlayProps) => {
-  const selectedData = cubeComponents.find(c => c.id === selectedComponent);
+  const selectedData = machineComponents.find(c => c.id === selectedComponent);
   
-  // Calculate overall system health
-  const totalWear = Object.values(componentWear).reduce((sum, w) => sum + w, 0);
-  const avgWear = totalWear / Math.max(Object.keys(componentWear).length, 1);
+  // Calculate overall system health (only for gears)
+  const gearComponents = machineComponents.filter(c => c.type === 'gear');
+  const totalWear = gearComponents.reduce((sum, c) => sum + (componentWear[c.id] || 0), 0);
+  const avgWear = totalWear / Math.max(gearComponents.length, 1);
   const systemHealth = Math.max(0, 100 - avgWear * 100);
 
   const getHealthColor = (health: number) => {
@@ -30,10 +31,10 @@ const StatusOverlay = ({ selectedComponent, componentWear }: StatusOverlayProps)
         className="absolute top-6 left-6 z-10"
       >
         <h1 className="text-2xl font-bold text-foreground text-glow mb-1">
-          Interactive 3D Assembly
+          Gearbox Assembly
         </h1>
         <p className="text-sm text-muted-foreground">
-          Explore • Interact • Simulate
+          Interactive Technical Simulation
         </p>
       </motion.div>
 
@@ -47,11 +48,11 @@ const StatusOverlay = ({ selectedComponent, componentWear }: StatusOverlayProps)
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-              <Box className="w-5 h-5 text-primary" />
+              <Cog className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="dashboard-label">Components</p>
-              <p className="dashboard-value">{cubeComponents.length}</p>
+              <p className="dashboard-label">Gears</p>
+              <p className="dashboard-value">{gearComponents.length}</p>
             </div>
           </div>
 
@@ -77,7 +78,7 @@ const StatusOverlay = ({ selectedComponent, componentWear }: StatusOverlayProps)
             </div>
             <div>
               <p className="dashboard-label">Temperature</p>
-              <p className="dashboard-value text-foreground">42°C</p>
+              <p className="dashboard-value text-foreground">68°C</p>
             </div>
           </div>
 
@@ -88,8 +89,8 @@ const StatusOverlay = ({ selectedComponent, componentWear }: StatusOverlayProps)
               <Gauge className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="dashboard-label">RPM</p>
-              <p className="dashboard-value text-foreground">1,450</p>
+              <p className="dashboard-label">Output RPM</p>
+              <p className="dashboard-value text-foreground">1,200</p>
             </div>
           </div>
         </div>
@@ -109,6 +110,9 @@ const StatusOverlay = ({ selectedComponent, componentWear }: StatusOverlayProps)
               style={{ backgroundColor: selectedData.color }}
             />
             <span className="font-semibold text-foreground">{selectedData.name}</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground capitalize">
+              {selectedData.type}
+            </span>
           </div>
           <p className="text-sm text-muted-foreground">{selectedData.description}</p>
         </motion.div>
@@ -122,8 +126,8 @@ const StatusOverlay = ({ selectedComponent, componentWear }: StatusOverlayProps)
         className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10"
       >
         <div className="interactive-hint glass-panel px-4 py-2">
-          <span className="animate-pulse">●</span>
-          <span>Drag to rotate • Scroll to zoom • Click to inspect</span>
+          <span className="animate-pulse text-primary">●</span>
+          <span>Drag to rotate • Scroll to zoom • Click to inspect • Disassemble to explode</span>
         </div>
       </motion.div>
     </>
