@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, ContactShadows, Float, Stage } from '@react-three/drei';
+import { OrbitControls, Environment, ContactShadows, Float } from '@react-three/drei';
 import GearMachine from './GearMachine';
 
 interface Scene3DProps {
@@ -9,6 +9,9 @@ interface Scene3DProps {
   componentWear: Record<string, number>;
   visibleComponents: Record<string, boolean>;
   autoRotate: boolean;
+  movingComponent: string | null;
+  onDoubleClick: (id: string) => void;
+  componentOffsets: Record<string, [number, number, number]>;
 }
 
 const Scene3D = ({
@@ -18,6 +21,9 @@ const Scene3D = ({
   componentWear,
   visibleComponents,
   autoRotate,
+  movingComponent,
+  onDoubleClick,
+  componentOffsets,
 }: Scene3DProps) => {
   return (
     <Canvas
@@ -61,6 +67,9 @@ const Scene3D = ({
           onSelectComponent={onSelectComponent}
           componentWear={componentWear}
           visibleComponents={visibleComponents}
+          movingComponent={movingComponent}
+          onDoubleClick={onDoubleClick}
+          componentOffsets={componentOffsets}
         />
       </Float>
 

@@ -5,9 +5,10 @@ import { Cog, Activity, ThermometerSun, Gauge } from 'lucide-react';
 interface StatusOverlayProps {
   selectedComponent: string | null;
   componentWear: Record<string, number>;
+  movingComponent?: string | null;
 }
 
-const StatusOverlay = ({ selectedComponent, componentWear }: StatusOverlayProps) => {
+const StatusOverlay = ({ selectedComponent, componentWear, movingComponent }: StatusOverlayProps) => {
   const selectedData = machineComponents.find(c => c.id === selectedComponent);
   
   // Calculate overall system health (only for gears)
@@ -119,17 +120,19 @@ const StatusOverlay = ({ selectedComponent, componentWear }: StatusOverlayProps)
       )}
 
       {/* Interactive Hint */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10"
-      >
-        <div className="interactive-hint glass-panel px-4 py-2">
-          <span className="animate-pulse text-primary">●</span>
-          <span>Drag to rotate • Scroll to zoom • Click to inspect • Disassemble to explode</span>
-        </div>
-      </motion.div>
+      {!movingComponent && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10"
+        >
+          <div className="interactive-hint glass-panel px-4 py-2">
+            <span className="animate-pulse text-primary">●</span>
+            <span>Drag to rotate • Scroll to zoom • Click to inspect • Double-click to move • Disassemble to explode</span>
+          </div>
+        </motion.div>
+      )}
     </>
   );
 };

@@ -315,6 +315,7 @@ const ControlPanel = ({
           <li>• Drag to rotate the view</li>
           <li>• Scroll to zoom in/out</li>
           <li>• Click components to inspect</li>
+          <li>• <strong>Double-click</strong> to move with arrows</li>
           <li>• Click "Disassemble" to explode</li>
           <li>• Adjust wear sliders to simulate</li>
         </ul>
