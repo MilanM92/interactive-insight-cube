@@ -3,16 +3,16 @@ import { motion } from 'framer-motion';
 import Scene3D from '@/components/Scene3D';
 import ControlPanel from '@/components/ControlPanel';
 import StatusOverlay from '@/components/StatusOverlay';
-import { machineComponents } from '@/components/CarModel';
-import { Loader2, Car, Move } from 'lucide-react';
+import { machineComponents } from '@/components/PlantModel';
+import { Loader2, Leaf, Move } from 'lucide-react';
 
 const LoadingFallback = () => (
   <div className="w-full h-full flex items-center justify-center">
     <div className="flex flex-col items-center gap-4">
       <div className="relative">
-        <Car className="w-12 h-12 text-primary animate-pulse" />
+        <Loader2 className="w-12 h-12 text-emerald-400 animate-spin" />
       </div>
-      <p className="text-sm text-muted-foreground">Loading 3D Car Model...</p>
+      <p className="text-sm text-muted-foreground">Loading 3D Plant Model...</p>
     </div>
   </div>
 );
@@ -29,10 +29,10 @@ const Index = () => {
   // Custom rotation offsets for components
   const [componentRotations, setComponentRotations] = useState<Record<string, [number, number, number]>>({});
   
-  // Open/closed state for doors and hatches
+  // Open/closed state for parts (kept for compatibility)
   const [openParts, setOpenParts] = useState<Record<string, boolean>>({});
   
-  // Initialize wear levels (keeping for compatibility, though car doesn't use wear)
+  // Initialize wear levels (keeping for compatibility)
   const [componentWear, setComponentWear] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = {};
     machineComponents.forEach(c => { initial[c.id] = 0; });
@@ -41,7 +41,7 @@ const Index = () => {
 
   // Initialize visibility for all components
   const [visibleComponents, setVisibleComponents] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
+    const initial: Record<string, boolean> = { 'plant-full': true };
     machineComponents.forEach(c => { initial[c.id] = true; });
     return initial;
   });
@@ -203,14 +203,12 @@ const Index = () => {
           className="absolute top-1/2 left-6 -translate-y-1/2 z-20 glass-panel p-4"
         >
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center animate-pulse">
-              <Move className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center animate-pulse">
+              <Move className="w-5 h-5 text-emerald-400" />
             </div>
             <div>
               <p className="font-medium text-foreground">Moving Mode</p>
-              <p className="text-xs text-muted-foreground">
-                {machineComponents.find(c => c.id === movingComponent)?.name}
-              </p>
+              <p className="text-xs text-muted-foreground">Indoor Plant</p>
             </div>
           </div>
           <div className="text-xs text-muted-foreground space-y-1">

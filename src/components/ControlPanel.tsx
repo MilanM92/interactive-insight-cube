@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { machineComponents, type ComponentData } from './CarModel';
-import { Car, Eye, EyeOff, RotateCcw, Layers, DoorOpen, DoorClosed, Settings } from 'lucide-react';
+import { machineComponents, type ComponentData } from './PlantModel';
+import { Leaf, Eye, EyeOff, RotateCcw, Layers, Droplets, Sun } from 'lucide-react';
 
 interface ControlPanelProps {
   isExploded: boolean;
@@ -17,11 +17,11 @@ interface ControlPanelProps {
 
 const getTypeIcon = (type: string) => {
   switch (type) {
-    case 'body': return <Car className="w-3 h-3" />;
-    case 'door': return <DoorClosed className="w-3 h-3" />;
-    case 'hatch': return <Settings className="w-3 h-3" />;
-    case 'wheel': return <div className="w-3 h-3 rounded-full border-2 border-current" />;
-    default: return null;
+    case 'pot': return <Droplets className="w-3 h-3" />;
+    case 'ground': return <div className="w-3 h-3 rounded-sm bg-amber-800" />;
+    case 'leaves': return <Leaf className="w-3 h-3" />;
+    case 'root': return <div className="w-3 h-3 rounded-full border-2 border-current" />;
+    default: return <Leaf className="w-3 h-3" />;
   }
 };
 
@@ -34,106 +34,24 @@ const ControlPanel = ({
   onSelectComponent,
   visibleComponents,
   setVisibleComponents,
-  openParts,
-  setOpenParts,
 }: ControlPanelProps) => {
-  const selectedData = machineComponents.find(c => c.id === selectedComponent);
+  // For the plant, we have a single interactive component
+  const plantComponent = {
+    id: 'plant-full',
+    name: 'Indoor Plant',
+    color: '#228b22',
+    description: 'Beautiful indoor plant with pot, soil, and foliage',
+    type: 'plant' as const,
+  };
 
-  const handleVisibilityToggle = (componentId: string) => {
+  const isSelected = selectedComponent === 'plant-full';
+  const isVisible = visibleComponents['plant-full'] !== false;
+
+  const handleVisibilityToggle = () => {
     setVisibleComponents({
       ...visibleComponents,
-      [componentId]: visibleComponents[componentId] === false ? true : false,
+      ['plant-full']: visibleComponents['plant-full'] === false ? true : false,
     });
-  };
-
-  const handleOpenToggle = (componentId: string) => {
-    setOpenParts({
-      ...openParts,
-      [componentId]: !openParts[componentId],
-    });
-  };
-
-  const openAllDoors = () => {
-    const newOpenParts = { ...openParts };
-    machineComponents
-      .filter(c => c.type === 'door' || c.type === 'hatch')
-      .forEach(c => { newOpenParts[c.id] = true; });
-    setOpenParts(newOpenParts);
-  };
-
-  const closeAllDoors = () => {
-    const newOpenParts = { ...openParts };
-    machineComponents
-      .filter(c => c.type === 'door' || c.type === 'hatch')
-      .forEach(c => { newOpenParts[c.id] = false; });
-    setOpenParts(newOpenParts);
-  };
-
-  // Group components by type
-  const body = machineComponents.filter(c => c.type === 'body');
-  const doors = machineComponents.filter(c => c.type === 'door');
-  const hatches = machineComponents.filter(c => c.type === 'hatch');
-  const wheels = machineComponents.filter(c => c.type === 'wheel');
-
-  const renderComponentItem = (component: ComponentData) => {
-    const isSelected = selectedComponent === component.id;
-    const isVisible = visibleComponents[component.id] !== false;
-    const isOpen = openParts[component.id] || false;
-    const canOpen = component.type === 'door' || component.type === 'hatch';
-
-    return (
-      <motion.div
-        key={component.id}
-        layout
-        className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-          isSelected 
-            ? 'bg-primary/20 border border-primary/30' 
-            : 'bg-secondary/50 hover:bg-secondary'
-        }`}
-        onClick={() => onSelectComponent(isSelected ? null : component.id)}
-      >
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-3 h-3 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: component.color }}
-            />
-            <span className="text-sm font-medium truncate max-w-[120px]">{component.name}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            {canOpen && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleOpenToggle(component.id);
-                }}
-                className={`p-1 rounded transition-colors ${isOpen ? 'bg-primary/20 text-primary' : 'hover:bg-muted'}`}
-                title={isOpen ? 'Close' : 'Open'}
-              >
-                {isOpen ? (
-                  <DoorOpen className="w-4 h-4" />
-                ) : (
-                  <DoorClosed className="w-4 h-4 text-muted-foreground" />
-                )}
-              </button>
-            )}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleVisibilityToggle(component.id);
-              }}
-              className="p-1 rounded hover:bg-muted transition-colors"
-            >
-              {isVisible ? (
-                <Eye className="w-4 h-4 text-muted-foreground" />
-              ) : (
-                <EyeOff className="w-4 h-4 text-muted-foreground/50" />
-              )}
-            </button>
-          </div>
-        </div>
-      </motion.div>
-    );
   };
 
   return (
@@ -145,11 +63,11 @@ const ControlPanel = ({
     >
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-          <Car className="w-5 h-5 text-primary" />
+        <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+          <Leaf className="w-5 h-5 text-emerald-400" />
         </div>
         <div>
-          <h2 className="font-semibold text-foreground">Car Explorer</h2>
+          <h2 className="font-semibold text-foreground">Plant Explorer</h2>
           <p className="text-xs text-muted-foreground">Interactive 3D Model</p>
         </div>
       </div>
@@ -173,110 +91,97 @@ const ControlPanel = ({
             {autoRotate ? 'Stop' : 'Rotate'}
           </button>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={openAllDoors}
-            className="control-btn flex-1 flex items-center justify-center gap-2"
-          >
-            <DoorOpen className="w-4 h-4" />
-            Open All
-          </button>
-          <button
-            onClick={closeAllDoors}
-            className="control-btn flex-1 flex items-center justify-center gap-2"
-          >
-            <DoorClosed className="w-4 h-4" />
-            Close All
-          </button>
-        </div>
       </div>
 
-      {/* Body Section */}
-      <div className="mb-4">
-        <p className="dashboard-label mb-3 flex items-center gap-2">
-          <Car className="w-3 h-3" /> Body
-        </p>
-        <div className="space-y-2">
-          {body.map(renderComponentItem)}
-        </div>
-      </div>
-
-      {/* Doors Section */}
-      <div className="mb-4">
-        <p className="dashboard-label mb-3 flex items-center gap-2">
-          <DoorClosed className="w-3 h-3" /> Doors
-        </p>
-        <div className="space-y-2">
-          {doors.map(renderComponentItem)}
-        </div>
-      </div>
-
-      {/* Hatches Section */}
-      <div className="mb-4">
-        <p className="dashboard-label mb-3 flex items-center gap-2">
-          <Settings className="w-3 h-3" /> Hood & Trunk
-        </p>
-        <div className="space-y-2">
-          {hatches.map(renderComponentItem)}
-        </div>
-      </div>
-
-      {/* Wheels Section */}
+      {/* Plant Component */}
       <div className="mb-6">
         <p className="dashboard-label mb-3 flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full border-2 border-muted-foreground" /> Wheels
+          <Leaf className="w-3 h-3" /> Plant Model
         </p>
+        <motion.div
+          layout
+          className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+            isSelected 
+              ? 'bg-emerald-500/20 border border-emerald-500/30' 
+              : 'bg-secondary/50 hover:bg-secondary'
+          }`}
+          onClick={() => onSelectComponent(isSelected ? null : 'plant-full')}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: plantComponent.color }}
+              />
+              <span className="text-sm font-medium">{plantComponent.name}</span>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleVisibilityToggle();
+              }}
+              className="p-1 rounded hover:bg-muted transition-colors"
+            >
+              {isVisible ? (
+                <Eye className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <EyeOff className="w-4 h-4 text-muted-foreground/50" />
+              )}
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground">{plantComponent.description}</p>
+        </motion.div>
+      </div>
+
+      {/* Component Parts Info */}
+      <div className="mb-6">
+        <p className="dashboard-label mb-3">Components</p>
         <div className="space-y-2">
-          {wheels.map(renderComponentItem)}
+          {machineComponents.map((component) => (
+            <div
+              key={component.id}
+              className="flex items-center gap-3 p-2 rounded-lg bg-muted/30"
+            >
+              {getTypeIcon(component.type)}
+              <div>
+                <p className="text-sm font-medium">{component.name}</p>
+                <p className="text-xs text-muted-foreground">{component.description}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Selected Component Details */}
-      {selectedData && (
+      {isSelected && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-6"
         >
-          <p className="dashboard-label mb-3">Part Details</p>
+          <p className="dashboard-label mb-3">Selected</p>
           <div className="glass-panel p-4">
             <div className="flex items-center gap-2 mb-3">
               <div
                 className="w-4 h-4 rounded"
-                style={{ backgroundColor: selectedData.color }}
+                style={{ backgroundColor: plantComponent.color }}
               />
-              <span className="font-medium">{selectedData.name}</span>
+              <span className="font-medium">{plantComponent.name}</span>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              {selectedData.description}
+              {plantComponent.description}
             </p>
 
-            {/* Open/Close for doors and hatches */}
-            {(selectedData.type === 'door' || selectedData.type === 'hatch') && (
-              <button
-                onClick={() => handleOpenToggle(selectedData.id)}
-                className={`w-full control-btn flex items-center justify-center gap-2 ${
-                  openParts[selectedData.id] ? 'active' : ''
-                }`}
-              >
-                {openParts[selectedData.id] ? (
-                  <>
-                    <DoorOpen className="w-4 h-4" />
-                    Close {selectedData.type === 'door' ? 'Door' : selectedData.props?.type === 'hood' ? 'Hood' : 'Trunk'}
-                  </>
-                ) : (
-                  <>
-                    <DoorClosed className="w-4 h-4" />
-                    Open {selectedData.type === 'door' ? 'Door' : selectedData.props?.type === 'hood' ? 'Hood' : 'Trunk'}
-                  </>
-                )}
-              </button>
-            )}
-
-            {/* Type badge */}
-            <div className="mt-3 flex items-center gap-2 p-2 rounded-lg bg-muted/30">
-              {getTypeIcon(selectedData.type)}
-              <span className="text-sm text-muted-foreground capitalize">{selectedData.type}</span>
+            {/* Plant care tips */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Sun className="w-4 h-4 text-amber-400" />
+                <span className="text-muted-foreground">Indirect sunlight</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Droplets className="w-4 h-4 text-blue-400" />
+                <span className="text-muted-foreground">Water weekly</span>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -288,10 +193,10 @@ const ControlPanel = ({
         <ul className="text-xs text-muted-foreground space-y-1">
           <li>• Drag to rotate the view</li>
           <li>• Scroll to zoom in/out</li>
-          <li>• Click parts to inspect</li>
+          <li>• Click plant to inspect</li>
           <li>• <strong>Double-click</strong> to move with arrows</li>
-          <li>• Click door icons to open/close</li>
-          <li>• Click "Explode" for exploded view</li>
+          <li>• Use Q/E/W/S/A/D to rotate</li>
+          <li>• Press R to reset position</li>
         </ul>
       </div>
     </motion.div>
