@@ -1,6 +1,6 @@
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, ContactShadows, Float } from '@react-three/drei';
-import InteractiveCube from './InteractiveCube';
+import { OrbitControls, Environment, ContactShadows, Float, Stage } from '@react-three/drei';
+import GearMachine from './GearMachine';
 
 interface Scene3DProps {
   isExploded: boolean;
@@ -21,33 +21,41 @@ const Scene3D = ({
 }: Scene3DProps) => {
   return (
     <Canvas
-      camera={{ position: [5, 4, 5], fov: 50 }}
+      camera={{ position: [6, 4, 6], fov: 45 }}
       gl={{ antialias: true, alpha: true }}
       dpr={[1, 2]}
       style={{ background: 'transparent' }}
+      shadows
     >
       {/* Lighting */}
-      <ambientLight intensity={0.4} />
+      <ambientLight intensity={0.3} />
       <directionalLight
         position={[10, 10, 5]}
-        intensity={1}
+        intensity={1.5}
         castShadow
         shadow-mapSize={[2048, 2048]}
       />
-      <pointLight position={[-10, -10, -10]} intensity={0.5} color="#22d3ee" />
-      <pointLight position={[10, -5, 10]} intensity={0.3} color="#8b5cf6" />
+      <pointLight position={[-10, -10, -10]} intensity={0.4} color="#22d3ee" />
+      <pointLight position={[10, -5, 10]} intensity={0.3} color="#3b82f6" />
+      <spotLight
+        position={[0, 10, 0]}
+        angle={0.3}
+        penumbra={1}
+        intensity={0.5}
+        color="#ffffff"
+      />
 
       {/* Environment for reflections */}
       <Environment preset="city" />
 
-      {/* Interactive Cube with float animation */}
+      {/* Gear Machine with float animation */}
       <Float
-        speed={2}
-        rotationIntensity={0.1}
-        floatIntensity={0.3}
-        floatingRange={[-0.1, 0.1]}
+        speed={1.5}
+        rotationIntensity={0.05}
+        floatIntensity={0.2}
+        floatingRange={[-0.05, 0.05]}
       >
-        <InteractiveCube
+        <GearMachine
           isExploded={isExploded}
           selectedComponent={selectedComponent}
           onSelectComponent={onSelectComponent}
@@ -58,13 +66,16 @@ const Scene3D = ({
 
       {/* Ground shadow */}
       <ContactShadows
-        position={[0, -3, 0]}
-        opacity={0.4}
-        scale={10}
-        blur={2}
+        position={[0, -2, 0]}
+        opacity={0.5}
+        scale={12}
+        blur={2.5}
         far={4}
         color="#22d3ee"
       />
+
+      {/* Grid helper for industrial feel */}
+      <gridHelper args={[20, 20, '#1e3a5f', '#0f172a']} position={[0, -2, 0]} />
 
       {/* Controls */}
       <OrbitControls
@@ -73,7 +84,7 @@ const Scene3D = ({
         minDistance={4}
         maxDistance={15}
         autoRotate={autoRotate}
-        autoRotateSpeed={1}
+        autoRotateSpeed={0.8}
         makeDefault
       />
     </Canvas>

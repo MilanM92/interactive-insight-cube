@@ -3,14 +3,17 @@ import { motion } from 'framer-motion';
 import Scene3D from '@/components/Scene3D';
 import ControlPanel from '@/components/ControlPanel';
 import StatusOverlay from '@/components/StatusOverlay';
-import { cubeComponents } from '@/components/InteractiveCube';
-import { Loader2 } from 'lucide-react';
+import { machineComponents } from '@/components/GearMachine';
+import { Loader2, Cog } from 'lucide-react';
 
 const LoadingFallback = () => (
   <div className="w-full h-full flex items-center justify-center">
     <div className="flex flex-col items-center gap-4">
-      <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      <p className="text-sm text-muted-foreground">Loading 3D Environment...</p>
+      <div className="relative">
+        <Cog className="w-12 h-12 text-primary animate-spin" style={{ animationDuration: '2s' }} />
+        <Cog className="w-8 h-8 text-accent absolute -right-4 top-6 animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }} />
+      </div>
+      <p className="text-sm text-muted-foreground">Loading 3D Gearbox...</p>
     </div>
   </div>
 );
@@ -20,20 +23,21 @@ const Index = () => {
   const [autoRotate, setAutoRotate] = useState(true);
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   
-  // Initialize wear levels for all components
+  // Initialize wear levels for gear components
   const [componentWear, setComponentWear] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = {};
-    cubeComponents.forEach(c => { initial[c.id] = 0; });
+    machineComponents.forEach(c => { initial[c.id] = 0; });
     // Set some initial wear for demo
-    initial['left-bearing'] = 0.65;
-    initial['right-bearing'] = 0.35;
+    initial['drive-gear'] = 0.55;
+    initial['driven-gear'] = 0.25;
+    initial['idler-gear'] = 0.72;
     return initial;
   });
 
   // Initialize visibility for all components
   const [visibleComponents, setVisibleComponents] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
-    cubeComponents.forEach(c => { initial[c.id] = true; });
+    machineComponents.forEach(c => { initial[c.id] = true; });
     return initial;
   });
 
