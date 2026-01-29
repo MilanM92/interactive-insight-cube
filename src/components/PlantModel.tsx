@@ -82,7 +82,7 @@ const PlantModel = ({
   // Load the OBJ model
   const obj = useLoader(OBJLoader, '/models/indoor_plant_02.obj');
   
-  // Clone and prepare the model
+  // Clone and prepare the model with realistic colors
   const model = useMemo(() => {
     const cloned = obj.clone();
     
@@ -95,40 +95,64 @@ const PlantModel = ({
     cloned.position.sub(center);
     cloned.position.y = 0;
     
-    // Apply materials based on material names from MTL
+    // Apply realistic materials based on material names from MTL
     cloned.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         const materialName = (child.material as THREE.Material).name || '';
+        const meshName = child.name?.toLowerCase() || '';
         
-        // Determine color based on material name
-        let color = '#228b22'; // Default green
-        let metalness = 0.1;
+        // Determine material properties based on material/mesh name
+        let color = '#4a7c59'; // Default natural green
+        let metalness = 0.05;
         let roughness = 0.8;
+        let transparent = false;
+        let opacity = 1.0;
         
-        if (materialName.includes('Pot') || materialName.includes('IDP_Pot')) {
-          color = '#8b7355';
-          metalness = 0.3;
-          roughness = 0.6;
-        } else if (materialName.includes('ground') || materialName.includes('IDP_ground')) {
-          color = '#3d2817';
-          metalness = 0.0;
-          roughness = 1.0;
-        } else if (materialName.includes('leaves') || materialName.includes('IDP_leaves')) {
-          color = '#228b22';
+        // Pot - terracotta/ceramic look
+        if (materialName.includes('Pot') || materialName.includes('IDP_Pot') || meshName.includes('pot')) {
+          color = '#c4836e'; // Terracotta orange-brown
           metalness = 0.1;
           roughness = 0.7;
-        } else if (materialName.includes('root') || materialName.includes('IDP_root')) {
-          color = '#654321';
+        } 
+        // Soil/Ground - dark rich soil
+        else if (materialName.includes('ground') || materialName.includes('IDP_ground') || meshName.includes('ground') || meshName.includes('soil')) {
+          color = '#3d2314'; // Dark rich soil brown
+          metalness = 0.0;
+          roughness = 1.0;
+        } 
+        // Leaves - vibrant green with slight variation
+        else if (materialName.includes('leaves') || materialName.includes('IDP_leaves') || meshName.includes('leaf') || meshName.includes('leaves')) {
+          // Vary green slightly for natural look
+          const greens = ['#2d5a27', '#3a6b35', '#4a7c45', '#327a2e', '#458b3c'];
+          color = greens[Math.floor(Math.random() * greens.length)];
+          metalness = 0.05;
+          roughness = 0.6;
+          // Slight translucency for leaves
+          transparent = true;
+          opacity = 0.95;
+        } 
+        // Roots/Stems - woody brown
+        else if (materialName.includes('root') || materialName.includes('IDP_root') || meshName.includes('root') || meshName.includes('stem') || meshName.includes('trunk')) {
+          color = '#5c4033'; // Warm woody brown
+          metalness = 0.05;
+          roughness = 0.85;
+        }
+        // Material.006 - likely decorative element
+        else if (materialName.includes('Material.006')) {
+          color = '#8b7355'; // Neutral brown
           metalness = 0.1;
-          roughness = 0.9;
+          roughness = 0.75;
         }
         
-        // Create a new material
+        // Create a new PBR material with realistic properties
         child.material = new THREE.MeshStandardMaterial({
           color,
           metalness,
           roughness,
           side: THREE.DoubleSide,
+          transparent,
+          opacity,
+          flatShading: false,
         });
         
         // Enable shadows
