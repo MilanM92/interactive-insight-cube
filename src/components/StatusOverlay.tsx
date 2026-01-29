@@ -1,27 +1,19 @@
 import { motion } from 'framer-motion';
-import { machineComponents } from './GearMachine';
-import { Cog, Activity, ThermometerSun, Gauge } from 'lucide-react';
+import { machineComponents } from './CarModel';
+import { Car, DoorOpen, Gauge, Thermometer } from 'lucide-react';
 
 interface StatusOverlayProps {
   selectedComponent: string | null;
-  componentWear: Record<string, number>;
+  openParts: Record<string, boolean>;
   movingComponent?: string | null;
 }
 
-const StatusOverlay = ({ selectedComponent, componentWear, movingComponent }: StatusOverlayProps) => {
+const StatusOverlay = ({ selectedComponent, openParts, movingComponent }: StatusOverlayProps) => {
   const selectedData = machineComponents.find(c => c.id === selectedComponent);
   
-  // Calculate overall system health (only for gears)
-  const gearComponents = machineComponents.filter(c => c.type === 'gear');
-  const totalWear = gearComponents.reduce((sum, c) => sum + (componentWear[c.id] || 0), 0);
-  const avgWear = totalWear / Math.max(gearComponents.length, 1);
-  const systemHealth = Math.max(0, 100 - avgWear * 100);
-
-  const getHealthColor = (health: number) => {
-    if (health < 30) return 'text-red-400';
-    if (health < 60) return 'text-amber-400';
-    return 'text-emerald-400';
-  };
+  // Count open doors/hatches
+  const openableComponents = machineComponents.filter(c => c.type === 'door' || c.type === 'hatch');
+  const openCount = openableComponents.filter(c => openParts[c.id]).length;
 
   return (
     <>
@@ -32,10 +24,10 @@ const StatusOverlay = ({ selectedComponent, componentWear, movingComponent }: St
         className="absolute top-6 left-6 z-10"
       >
         <h1 className="text-2xl font-bold text-foreground text-glow mb-1">
-          Gearbox Assembly
+          Car Assembly
         </h1>
         <p className="text-sm text-muted-foreground">
-          Interactive Technical Simulation
+          Interactive 3D Explorer
         </p>
       </motion.div>
 
@@ -49,11 +41,11 @@ const StatusOverlay = ({ selectedComponent, componentWear, movingComponent }: St
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-              <Cog className="w-5 h-5 text-primary" />
+              <Car className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="dashboard-label">Gears</p>
-              <p className="dashboard-value">{gearComponents.length}</p>
+              <p className="dashboard-label">Parts</p>
+              <p className="dashboard-value">{machineComponents.length}</p>
             </div>
           </div>
 
@@ -61,12 +53,12 @@ const StatusOverlay = ({ selectedComponent, componentWear, movingComponent }: St
 
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-              <Activity className="w-5 h-5 text-emerald-400" />
+              <DoorOpen className="w-5 h-5 text-emerald-400" />
             </div>
             <div>
-              <p className="dashboard-label">System Health</p>
-              <p className={`dashboard-value ${getHealthColor(systemHealth)}`}>
-                {systemHealth.toFixed(0)}%
+              <p className="dashboard-label">Open Parts</p>
+              <p className="dashboard-value text-emerald-400">
+                {openCount}/{openableComponents.length}
               </p>
             </div>
           </div>
@@ -75,11 +67,11 @@ const StatusOverlay = ({ selectedComponent, componentWear, movingComponent }: St
 
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
-              <ThermometerSun className="w-5 h-5 text-amber-400" />
+              <Thermometer className="w-5 h-5 text-amber-400" />
             </div>
             <div>
-              <p className="dashboard-label">Temperature</p>
-              <p className="dashboard-value text-foreground">68°C</p>
+              <p className="dashboard-label">Engine</p>
+              <p className="dashboard-value text-foreground">Ready</p>
             </div>
           </div>
 
@@ -90,8 +82,8 @@ const StatusOverlay = ({ selectedComponent, componentWear, movingComponent }: St
               <Gauge className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="dashboard-label">Output RPM</p>
-              <p className="dashboard-value text-foreground">1,200</p>
+              <p className="dashboard-label">Speed</p>
+              <p className="dashboard-value text-foreground">0 km/h</p>
             </div>
           </div>
         </div>
@@ -129,7 +121,7 @@ const StatusOverlay = ({ selectedComponent, componentWear, movingComponent }: St
         >
           <div className="interactive-hint glass-panel px-4 py-2">
             <span className="animate-pulse text-primary">●</span>
-            <span>Drag to rotate • Scroll to zoom • Click to inspect • Double-click to move • Disassemble to explode</span>
+            <span>Drag to rotate • Scroll to zoom • Click to inspect • Double-click to move • Open doors/trunk</span>
           </div>
         </motion.div>
       )}

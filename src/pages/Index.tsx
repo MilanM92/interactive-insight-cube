@@ -3,17 +3,16 @@ import { motion } from 'framer-motion';
 import Scene3D from '@/components/Scene3D';
 import ControlPanel from '@/components/ControlPanel';
 import StatusOverlay from '@/components/StatusOverlay';
-import { machineComponents } from '@/components/GearMachine';
-import { Loader2, Cog, Move } from 'lucide-react';
+import { machineComponents } from '@/components/CarModel';
+import { Loader2, Car, Move } from 'lucide-react';
 
 const LoadingFallback = () => (
   <div className="w-full h-full flex items-center justify-center">
     <div className="flex flex-col items-center gap-4">
       <div className="relative">
-        <Cog className="w-12 h-12 text-primary animate-spin" style={{ animationDuration: '2s' }} />
-        <Cog className="w-8 h-8 text-accent absolute -right-4 top-6 animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }} />
+        <Car className="w-12 h-12 text-primary animate-pulse" />
       </div>
-      <p className="text-sm text-muted-foreground">Loading 3D Gearbox...</p>
+      <p className="text-sm text-muted-foreground">Loading 3D Car Model...</p>
     </div>
   </div>
 );
@@ -30,14 +29,13 @@ const Index = () => {
   // Custom rotation offsets for components
   const [componentRotations, setComponentRotations] = useState<Record<string, [number, number, number]>>({});
   
-  // Initialize wear levels for gear components
+  // Open/closed state for doors and hatches
+  const [openParts, setOpenParts] = useState<Record<string, boolean>>({});
+  
+  // Initialize wear levels (keeping for compatibility, though car doesn't use wear)
   const [componentWear, setComponentWear] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = {};
     machineComponents.forEach(c => { initial[c.id] = 0; });
-    // Set some initial wear for demo
-    initial['drive-gear'] = 0.55;
-    initial['driven-gear'] = 0.25;
-    initial['idler-gear'] = 0.72;
     return initial;
   });
 
@@ -191,6 +189,7 @@ const Index = () => {
             onDoubleClick={handleDoubleClick}
             componentOffsets={componentOffsets}
             componentRotations={componentRotations}
+            openParts={openParts}
           />
         </Suspense>
       </motion.div>
@@ -234,7 +233,7 @@ const Index = () => {
       {/* Status Overlay */}
       <StatusOverlay
         selectedComponent={selectedComponent}
-        componentWear={componentWear}
+        openParts={openParts}
         movingComponent={movingComponent}
       />
 
@@ -247,10 +246,10 @@ const Index = () => {
           setAutoRotate={setAutoRotate}
           selectedComponent={selectedComponent}
           onSelectComponent={setSelectedComponent}
-          componentWear={componentWear}
-          setComponentWear={setComponentWear}
           visibleComponents={visibleComponents}
           setVisibleComponents={setVisibleComponents}
+          openParts={openParts}
+          setOpenParts={setOpenParts}
         />
       </div>
     </div>

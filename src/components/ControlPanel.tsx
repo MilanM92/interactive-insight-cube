@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { machineComponents, type ComponentData } from './GearMachine';
-import { Cog, Eye, EyeOff, RotateCcw, Layers, Wrench, AlertTriangle, CheckCircle, Settings } from 'lucide-react';
+import { machineComponents, type ComponentData } from './CarModel';
+import { Car, Eye, EyeOff, RotateCcw, Layers, DoorOpen, DoorClosed, Settings } from 'lucide-react';
 
 interface ControlPanelProps {
   isExploded: boolean;
@@ -9,23 +9,18 @@ interface ControlPanelProps {
   setAutoRotate: (value: boolean) => void;
   selectedComponent: string | null;
   onSelectComponent: (id: string | null) => void;
-  componentWear: Record<string, number>;
-  setComponentWear: (wear: Record<string, number>) => void;
   visibleComponents: Record<string, boolean>;
   setVisibleComponents: (visible: Record<string, boolean>) => void;
+  openParts: Record<string, boolean>;
+  setOpenParts: (open: Record<string, boolean>) => void;
 }
-
-const getWearStatus = (wear: number) => {
-  if (wear > 0.7) return { label: 'Critical', className: 'wear-critical', color: 'bg-red-500' };
-  if (wear > 0.4) return { label: 'Warning', className: 'wear-warning', color: 'bg-amber-500' };
-  return { label: 'Healthy', className: 'wear-healthy', color: 'bg-emerald-500' };
-};
 
 const getTypeIcon = (type: string) => {
   switch (type) {
-    case 'gear': return <Cog className="w-3 h-3" />;
-    case 'shaft': return <div className="w-3 h-0.5 bg-current rounded" />;
-    case 'housing': return <Settings className="w-3 h-3" />;
+    case 'body': return <Car className="w-3 h-3" />;
+    case 'door': return <DoorClosed className="w-3 h-3" />;
+    case 'hatch': return <Settings className="w-3 h-3" />;
+    case 'wheel': return <div className="w-3 h-3 rounded-full border-2 border-current" />;
     default: return null;
   }
 };
@@ -37,16 +32,12 @@ const ControlPanel = ({
   setAutoRotate,
   selectedComponent,
   onSelectComponent,
-  componentWear,
-  setComponentWear,
   visibleComponents,
   setVisibleComponents,
+  openParts,
+  setOpenParts,
 }: ControlPanelProps) => {
   const selectedData = machineComponents.find(c => c.id === selectedComponent);
-
-  const handleWearChange = (componentId: string, value: number) => {
-    setComponentWear({ ...componentWear, [componentId]: value });
-  };
 
   const handleVisibilityToggle = (componentId: string) => {
     setVisibleComponents({
@@ -55,26 +46,40 @@ const ControlPanel = ({
     });
   };
 
-  const resetWear = (componentId: string) => {
-    setComponentWear({ ...componentWear, [componentId]: 0 });
+  const handleOpenToggle = (componentId: string) => {
+    setOpenParts({
+      ...openParts,
+      [componentId]: !openParts[componentId],
+    });
   };
 
-  const resetAllWear = () => {
-    const resetWear: Record<string, number> = {};
-    machineComponents.forEach(c => { resetWear[c.id] = 0; });
-    setComponentWear(resetWear);
+  const openAllDoors = () => {
+    const newOpenParts = { ...openParts };
+    machineComponents
+      .filter(c => c.type === 'door' || c.type === 'hatch')
+      .forEach(c => { newOpenParts[c.id] = true; });
+    setOpenParts(newOpenParts);
+  };
+
+  const closeAllDoors = () => {
+    const newOpenParts = { ...openParts };
+    machineComponents
+      .filter(c => c.type === 'door' || c.type === 'hatch')
+      .forEach(c => { newOpenParts[c.id] = false; });
+    setOpenParts(newOpenParts);
   };
 
   // Group components by type
-  const gears = machineComponents.filter(c => c.type === 'gear');
-  const shafts = machineComponents.filter(c => c.type === 'shaft');
-  const housings = machineComponents.filter(c => c.type === 'housing');
+  const body = machineComponents.filter(c => c.type === 'body');
+  const doors = machineComponents.filter(c => c.type === 'door');
+  const hatches = machineComponents.filter(c => c.type === 'hatch');
+  const wheels = machineComponents.filter(c => c.type === 'wheel');
 
   const renderComponentItem = (component: ComponentData) => {
     const isSelected = selectedComponent === component.id;
     const isVisible = visibleComponents[component.id] !== false;
-    const wear = componentWear[component.id] || 0;
-    const status = getWearStatus(wear);
+    const isOpen = openParts[component.id] || false;
+    const canOpen = component.type === 'door' || component.type === 'hatch';
 
     return (
       <motion.div
@@ -87,43 +92,46 @@ const ControlPanel = ({
         }`}
         onClick={() => onSelectComponent(isSelected ? null : component.id)}
       >
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <div
               className="w-3 h-3 rounded-full flex items-center justify-center"
               style={{ backgroundColor: component.color }}
             />
-            <span className="text-sm font-medium truncate max-w-[140px]">{component.name}</span>
+            <span className="text-sm font-medium truncate max-w-[120px]">{component.name}</span>
           </div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleVisibilityToggle(component.id);
-            }}
-            className="p-1 rounded hover:bg-muted transition-colors"
-          >
-            {isVisible ? (
-              <Eye className="w-4 h-4 text-muted-foreground" />
-            ) : (
-              <EyeOff className="w-4 h-4 text-muted-foreground/50" />
+          <div className="flex items-center gap-1">
+            {canOpen && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenToggle(component.id);
+                }}
+                className={`p-1 rounded transition-colors ${isOpen ? 'bg-primary/20 text-primary' : 'hover:bg-muted'}`}
+                title={isOpen ? 'Close' : 'Open'}
+              >
+                {isOpen ? (
+                  <DoorOpen className="w-4 h-4" />
+                ) : (
+                  <DoorClosed className="w-4 h-4 text-muted-foreground" />
+                )}
+              </button>
             )}
-          </button>
-        </div>
-        
-        {/* Wear indicator for gears only */}
-        {component.type === 'gear' && (
-          <div className="flex items-center gap-2">
-            <div className="wear-progress flex-1">
-              <div
-                className={`wear-progress-fill ${status.color}`}
-                style={{ width: `${wear * 100}%` }}
-              />
-            </div>
-            <span className={`text-xs font-mono ${status.className}`}>
-              {Math.round(wear * 100)}%
-            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleVisibilityToggle(component.id);
+              }}
+              className="p-1 rounded hover:bg-muted transition-colors"
+            >
+              {isVisible ? (
+                <Eye className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <EyeOff className="w-4 h-4 text-muted-foreground/50" />
+              )}
+            </button>
           </div>
-        )}
+        </div>
       </motion.div>
     );
   };
@@ -138,24 +146,24 @@ const ControlPanel = ({
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-          <Cog className="w-5 h-5 text-primary animate-spin" style={{ animationDuration: '3s' }} />
+          <Car className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 className="font-semibold text-foreground">Gearbox Control</h2>
-          <p className="text-xs text-muted-foreground">Interactive Simulation</p>
+          <h2 className="font-semibold text-foreground">Car Explorer</h2>
+          <p className="text-xs text-muted-foreground">Interactive 3D Model</p>
         </div>
       </div>
 
       {/* View Controls */}
       <div className="mb-6">
-        <p className="dashboard-label mb-3">Assembly Controls</p>
-        <div className="flex gap-2">
+        <p className="dashboard-label mb-3">View Controls</p>
+        <div className="flex gap-2 mb-2">
           <button
             onClick={() => setIsExploded(!isExploded)}
             className={`control-btn flex-1 flex items-center justify-center gap-2 ${isExploded ? 'active' : ''}`}
           >
             <Layers className="w-4 h-4" />
-            {isExploded ? 'Assemble' : 'Disassemble'}
+            {isExploded ? 'Assemble' : 'Explode'}
           </button>
           <button
             onClick={() => setAutoRotate(!autoRotate)}
@@ -165,35 +173,61 @@ const ControlPanel = ({
             {autoRotate ? 'Stop' : 'Rotate'}
           </button>
         </div>
-      </div>
-
-      {/* Gears Section */}
-      <div className="mb-4">
-        <p className="dashboard-label mb-3 flex items-center gap-2">
-          <Cog className="w-3 h-3" /> Gears
-        </p>
-        <div className="space-y-2">
-          {gears.map(renderComponentItem)}
+        <div className="flex gap-2">
+          <button
+            onClick={openAllDoors}
+            className="control-btn flex-1 flex items-center justify-center gap-2"
+          >
+            <DoorOpen className="w-4 h-4" />
+            Open All
+          </button>
+          <button
+            onClick={closeAllDoors}
+            className="control-btn flex-1 flex items-center justify-center gap-2"
+          >
+            <DoorClosed className="w-4 h-4" />
+            Close All
+          </button>
         </div>
       </div>
 
-      {/* Shafts Section */}
+      {/* Body Section */}
       <div className="mb-4">
         <p className="dashboard-label mb-3 flex items-center gap-2">
-          <div className="w-3 h-0.5 bg-muted-foreground rounded" /> Shafts
+          <Car className="w-3 h-3" /> Body
         </p>
         <div className="space-y-2">
-          {shafts.map(renderComponentItem)}
+          {body.map(renderComponentItem)}
         </div>
       </div>
 
-      {/* Housing Section */}
+      {/* Doors Section */}
+      <div className="mb-4">
+        <p className="dashboard-label mb-3 flex items-center gap-2">
+          <DoorClosed className="w-3 h-3" /> Doors
+        </p>
+        <div className="space-y-2">
+          {doors.map(renderComponentItem)}
+        </div>
+      </div>
+
+      {/* Hatches Section */}
+      <div className="mb-4">
+        <p className="dashboard-label mb-3 flex items-center gap-2">
+          <Settings className="w-3 h-3" /> Hood & Trunk
+        </p>
+        <div className="space-y-2">
+          {hatches.map(renderComponentItem)}
+        </div>
+      </div>
+
+      {/* Wheels Section */}
       <div className="mb-6">
         <p className="dashboard-label mb-3 flex items-center gap-2">
-          <Settings className="w-3 h-3" /> Housing
+          <div className="w-3 h-3 rounded-full border-2 border-muted-foreground" /> Wheels
         </p>
         <div className="space-y-2">
-          {housings.map(renderComponentItem)}
+          {wheels.map(renderComponentItem)}
         </div>
       </div>
 
@@ -204,7 +238,7 @@ const ControlPanel = ({
           animate={{ opacity: 1, y: 0 }}
           className="mb-6"
         >
-          <p className="dashboard-label mb-3">Component Details</p>
+          <p className="dashboard-label mb-3">Part Details</p>
           <div className="glass-panel p-4">
             <div className="flex items-center gap-2 mb-3">
               <div
@@ -217,107 +251,47 @@ const ControlPanel = ({
               {selectedData.description}
             </p>
 
-            {/* Wear Simulation for gears */}
-            {selectedData.type === 'gear' && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Wear Level</span>
-                  <span className={`text-sm font-mono ${getWearStatus(componentWear[selectedData.id] || 0).className}`}>
-                    {Math.round((componentWear[selectedData.id] || 0) * 100)}%
-                  </span>
-                </div>
-                
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={(componentWear[selectedData.id] || 0) * 100}
-                  onChange={(e) => handleWearChange(selectedData.id, Number(e.target.value) / 100)}
-                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-                />
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => resetWear(selectedData.id)}
-                    className="control-btn flex-1 flex items-center justify-center gap-2 text-sm"
-                  >
-                    <Wrench className="w-4 h-4" />
-                    Replace Gear
-                  </button>
-                </div>
-
-                {/* Status indicator */}
-                <div className={`flex items-center gap-2 p-2 rounded-lg ${
-                  (componentWear[selectedData.id] || 0) > 0.7 
-                    ? 'bg-red-500/10' 
-                    : (componentWear[selectedData.id] || 0) > 0.4 
-                      ? 'bg-amber-500/10' 
-                      : 'bg-emerald-500/10'
-                }`}>
-                  {(componentWear[selectedData.id] || 0) > 0.7 ? (
-                    <AlertTriangle className="w-4 h-4 text-red-400" />
-                  ) : (componentWear[selectedData.id] || 0) > 0.4 ? (
-                    <AlertTriangle className="w-4 h-4 text-amber-400" />
-                  ) : (
-                    <CheckCircle className="w-4 h-4 text-emerald-400" />
-                  )}
-                  <span className={`text-sm ${getWearStatus(componentWear[selectedData.id] || 0).className}`}>
-                    {getWearStatus(componentWear[selectedData.id] || 0).label}
-                  </span>
-                </div>
-              </div>
+            {/* Open/Close for doors and hatches */}
+            {(selectedData.type === 'door' || selectedData.type === 'hatch') && (
+              <button
+                onClick={() => handleOpenToggle(selectedData.id)}
+                className={`w-full control-btn flex items-center justify-center gap-2 ${
+                  openParts[selectedData.id] ? 'active' : ''
+                }`}
+              >
+                {openParts[selectedData.id] ? (
+                  <>
+                    <DoorOpen className="w-4 h-4" />
+                    Close {selectedData.type === 'door' ? 'Door' : selectedData.props?.type === 'hood' ? 'Hood' : 'Trunk'}
+                  </>
+                ) : (
+                  <>
+                    <DoorClosed className="w-4 h-4" />
+                    Open {selectedData.type === 'door' ? 'Door' : selectedData.props?.type === 'hood' ? 'Hood' : 'Trunk'}
+                  </>
+                )}
+              </button>
             )}
 
-            {/* Specs for shafts */}
-            {selectedData.type === 'shaft' && selectedData.props && (
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="bg-muted/30 p-2 rounded">
-                  <span className="text-muted-foreground">Length</span>
-                  <p className="font-mono">{selectedData.props.length}m</p>
-                </div>
-                <div className="bg-muted/30 p-2 rounded">
-                  <span className="text-muted-foreground">Radius</span>
-                  <p className="font-mono">{selectedData.props.radius}m</p>
-                </div>
-              </div>
-            )}
-
-            {/* Specs for gears */}
-            {selectedData.type === 'gear' && selectedData.props && (
-              <div className="grid grid-cols-2 gap-2 text-sm mt-3">
-                <div className="bg-muted/30 p-2 rounded">
-                  <span className="text-muted-foreground">Teeth</span>
-                  <p className="font-mono">{selectedData.props.teeth}</p>
-                </div>
-                <div className="bg-muted/30 p-2 rounded">
-                  <span className="text-muted-foreground">Radius</span>
-                  <p className="font-mono">{selectedData.props.radius}m</p>
-                </div>
-              </div>
-            )}
+            {/* Type badge */}
+            <div className="mt-3 flex items-center gap-2 p-2 rounded-lg bg-muted/30">
+              {getTypeIcon(selectedData.type)}
+              <span className="text-sm text-muted-foreground capitalize">{selectedData.type}</span>
+            </div>
           </div>
         </motion.div>
       )}
 
-      {/* Reset All Button */}
-      <button
-        onClick={resetAllWear}
-        className="w-full control-btn flex items-center justify-center gap-2"
-      >
-        <Wrench className="w-4 h-4" />
-        Replace All Gears
-      </button>
-
       {/* Instructions */}
-      <div className="mt-6 p-3 rounded-lg bg-muted/30">
+      <div className="p-3 rounded-lg bg-muted/30">
         <p className="dashboard-label mb-2">Instructions</p>
         <ul className="text-xs text-muted-foreground space-y-1">
           <li>• Drag to rotate the view</li>
           <li>• Scroll to zoom in/out</li>
-          <li>• Click components to inspect</li>
+          <li>• Click parts to inspect</li>
           <li>• <strong>Double-click</strong> to move with arrows</li>
-          <li>• Click "Disassemble" to explode</li>
-          <li>• Adjust wear sliders to simulate</li>
+          <li>• Click door icons to open/close</li>
+          <li>• Click "Explode" for exploded view</li>
         </ul>
       </div>
     </motion.div>
