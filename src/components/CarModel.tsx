@@ -17,6 +17,66 @@ interface CarPartProps {
   isOpen?: boolean;
 }
 
+// Create smooth car body shape
+const createCarBodyGeometry = () => {
+  const shape = new THREE.Shape();
+  
+  // Car body profile (side view) - more realistic sedan shape
+  shape.moveTo(-1.8, 0);
+  shape.lineTo(-1.8, 0.25);
+  shape.quadraticCurveTo(-1.75, 0.4, -1.5, 0.45);
+  shape.lineTo(-0.8, 0.45);
+  shape.quadraticCurveTo(-0.6, 0.45, -0.5, 0.7);
+  shape.lineTo(-0.3, 0.9);
+  shape.quadraticCurveTo(-0.2, 0.95, 0, 0.95);
+  shape.lineTo(0.5, 0.95);
+  shape.quadraticCurveTo(0.7, 0.95, 0.8, 0.85);
+  shape.lineTo(1.0, 0.65);
+  shape.quadraticCurveTo(1.1, 0.55, 1.3, 0.5);
+  shape.lineTo(1.6, 0.45);
+  shape.quadraticCurveTo(1.8, 0.4, 1.85, 0.25);
+  shape.lineTo(1.85, 0);
+  shape.lineTo(-1.8, 0);
+
+  const extrudeSettings = {
+    steps: 1,
+    depth: 1.4,
+    bevelEnabled: true,
+    bevelThickness: 0.05,
+    bevelSize: 0.05,
+    bevelSegments: 3,
+  };
+
+  const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+  geometry.translate(0, 0, -0.7);
+  return geometry;
+};
+
+// Create window geometry
+const createWindowGeometry = () => {
+  const shape = new THREE.Shape();
+  
+  // Window profile
+  shape.moveTo(-0.45, 0.5);
+  shape.lineTo(-0.25, 0.85);
+  shape.quadraticCurveTo(-0.15, 0.9, 0, 0.9);
+  shape.lineTo(0.45, 0.9);
+  shape.quadraticCurveTo(0.6, 0.9, 0.7, 0.8);
+  shape.lineTo(0.9, 0.55);
+  shape.lineTo(-0.45, 0.55);
+  shape.lineTo(-0.45, 0.5);
+
+  const extrudeSettings = {
+    steps: 1,
+    depth: 1.3,
+    bevelEnabled: false,
+  };
+
+  const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+  geometry.translate(0, 0, -0.65);
+  return geometry;
+};
+
 // Car Body Component
 const CarBodyComponent = ({
   position,
@@ -33,6 +93,9 @@ const CarBodyComponent = ({
 }: CarPartProps) => {
   const meshRef = useRef<THREE.Group>(null);
   const currentPos = useRef(new THREE.Vector3(...position));
+
+  const bodyGeometry = useMemo(() => createCarBodyGeometry(), []);
+  const windowGeometry = useMemo(() => createWindowGeometry(), []);
 
   const targetPos = useMemo(() => {
     const base = isExploded ? explodedPosition : position;
@@ -71,50 +134,85 @@ const CarBodyComponent = ({
       onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
       onPointerOut={() => { document.body.style.cursor = 'auto'; }}
     >
-      {/* Main body base */}
-      <mesh position={[0, 0, 0]}>
-        <boxGeometry args={[3.5, 0.6, 1.6]} />
+      {/* Main body */}
+      <mesh geometry={bodyGeometry}>
         <meshStandardMaterial
           color={color}
-          metalness={0.8}
-          roughness={0.2}
-          emissive={isMoving ? '#22d3ee' : isSelected ? color : '#000000'}
-          emissiveIntensity={isMoving ? 0.4 : isSelected ? 0.2 : 0}
-        />
-      </mesh>
-      {/* Cabin */}
-      <mesh position={[0, 0.55, 0]}>
-        <boxGeometry args={[2, 0.5, 1.5]} />
-        <meshStandardMaterial
-          color={color}
-          metalness={0.8}
-          roughness={0.2}
-          emissive={isMoving ? '#22d3ee' : isSelected ? color : '#000000'}
-          emissiveIntensity={isMoving ? 0.4 : isSelected ? 0.2 : 0}
-        />
-      </mesh>
-      {/* Front windshield area */}
-      <mesh position={[0.8, 0.55, 0]} rotation={[0, 0, -0.3]}>
-        <boxGeometry args={[0.6, 0.5, 1.4]} />
-        <meshStandardMaterial
-          color="#1e3a5f"
           metalness={0.9}
-          roughness={0.1}
-          transparent
-          opacity={0.6}
+          roughness={0.15}
+          emissive={isMoving ? '#22d3ee' : isSelected ? color : '#000000'}
+          emissiveIntensity={isMoving ? 0.3 : isSelected ? 0.15 : 0}
+          envMapIntensity={1.5}
         />
       </mesh>
-      {/* Rear windshield area */}
-      <mesh position={[-0.8, 0.55, 0]} rotation={[0, 0, 0.3]}>
-        <boxGeometry args={[0.6, 0.5, 1.4]} />
+      
+      {/* Windows */}
+      <mesh geometry={windowGeometry} position={[0, 0.02, 0]}>
         <meshStandardMaterial
-          color="#1e3a5f"
-          metalness={0.9}
-          roughness={0.1}
+          color="#1a2a3a"
+          metalness={0.95}
+          roughness={0.05}
           transparent
-          opacity={0.6}
+          opacity={0.85}
+          envMapIntensity={2}
         />
       </mesh>
+
+      {/* Front grille */}
+      <mesh position={[1.82, 0.22, 0]}>
+        <boxGeometry args={[0.08, 0.18, 0.8]} />
+        <meshStandardMaterial color="#1a1a1a" metalness={0.8} roughness={0.3} />
+      </mesh>
+
+      {/* Headlights */}
+      {[-0.45, 0.45].map((z, i) => (
+        <group key={i} position={[1.8, 0.3, z]}>
+          <mesh>
+            <sphereGeometry args={[0.12, 16, 16, 0, Math.PI]} />
+            <meshStandardMaterial
+              color="#ffffff"
+              emissive="#ffffcc"
+              emissiveIntensity={0.3}
+              metalness={0.1}
+              roughness={0.1}
+              transparent
+              opacity={0.9}
+            />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Taillights */}
+      {[-0.5, 0.5].map((z, i) => (
+        <mesh key={i} position={[-1.78, 0.3, z]}>
+          <boxGeometry args={[0.05, 0.12, 0.25]} />
+          <meshStandardMaterial
+            color="#ff2222"
+            emissive="#ff0000"
+            emissiveIntensity={0.4}
+            metalness={0.3}
+            roughness={0.2}
+          />
+        </mesh>
+      ))}
+
+      {/* Side mirrors */}
+      {[-0.78, 0.78].map((z, i) => (
+        <group key={i} position={[0.6, 0.65, z]}>
+          <mesh rotation={[0, z > 0 ? 0.3 : -0.3, 0]}>
+            <boxGeometry args={[0.15, 0.08, 0.06]} />
+            <meshStandardMaterial color={color} metalness={0.9} roughness={0.15} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Wheel wells - darker recesses */}
+      {[[1.15, -0.7], [1.15, 0.7], [-1.15, -0.7], [-1.15, 0.7]].map((pos, i) => (
+        <mesh key={i} position={[pos[0], 0.15, pos[1]]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.38, 0.38, 0.15, 24, 1, true]} />
+          <meshStandardMaterial color="#0a0a0a" side={THREE.DoubleSide} />
+        </mesh>
+      ))}
     </group>
   );
 };
@@ -124,6 +222,33 @@ interface DoorProps extends CarPartProps {
   side: 'left' | 'right';
   doorPosition: 'front' | 'rear';
 }
+
+const createDoorGeometry = (isFront: boolean) => {
+  const shape = new THREE.Shape();
+  const length = isFront ? 0.55 : 0.5;
+  
+  // Door panel profile
+  shape.moveTo(0, 0.08);
+  shape.lineTo(0, 0.48);
+  shape.quadraticCurveTo(0.02, 0.52, 0.08, 0.58);
+  shape.lineTo(length - 0.08, isFront ? 0.65 : 0.6);
+  shape.quadraticCurveTo(length, isFront ? 0.62 : 0.58, length, isFront ? 0.55 : 0.52);
+  shape.lineTo(length, 0.08);
+  shape.quadraticCurveTo(length, 0.02, length - 0.05, 0);
+  shape.lineTo(0.05, 0);
+  shape.quadraticCurveTo(0, 0.02, 0, 0.08);
+
+  const extrudeSettings = {
+    steps: 1,
+    depth: 0.04,
+    bevelEnabled: true,
+    bevelThickness: 0.01,
+    bevelSize: 0.01,
+    bevelSegments: 2,
+  };
+
+  return new THREE.ExtrudeGeometry(shape, extrudeSettings);
+};
 
 const DoorComponent = ({
   position,
@@ -142,8 +267,11 @@ const DoorComponent = ({
   doorPosition,
 }: DoorProps) => {
   const meshRef = useRef<THREE.Group>(null);
+  const pivotRef = useRef<THREE.Group>(null);
   const currentPos = useRef(new THREE.Vector3(...position));
   const currentOpenAngle = useRef(0);
+
+  const doorGeometry = useMemo(() => createDoorGeometry(doorPosition === 'front'), [doorPosition]);
 
   const targetPos = useMemo(() => {
     const base = isExploded ? explodedPosition : position;
@@ -154,23 +282,16 @@ const DoorComponent = ({
     ] as [number, number, number];
   }, [isExploded, explodedPosition, position, positionOffset]);
 
-  const targetOpenAngle = isOpen ? (side === 'left' ? -Math.PI / 3 : Math.PI / 3) : 0;
+  const targetOpenAngle = isOpen ? (side === 'left' ? Math.PI / 2.5 : -Math.PI / 2.5) : 0;
 
   useFrame((_, delta) => {
-    if (!meshRef.current) return;
+    if (!meshRef.current || !pivotRef.current) return;
     currentPos.current.lerp(new THREE.Vector3(...targetPos), delta * 5);
     meshRef.current.position.copy(currentPos.current);
 
     // Smooth door opening animation
     currentOpenAngle.current += (targetOpenAngle - currentOpenAngle.current) * delta * 5;
-    
-    // Apply rotation based on side
-    const zOffset = side === 'left' ? 0.75 : -0.75;
-    meshRef.current.rotation.set(
-      rotationOffset[0],
-      currentOpenAngle.current + rotationOffset[1],
-      rotationOffset[2]
-    );
+    pivotRef.current.rotation.y = currentOpenAngle.current + rotationOffset[1];
 
     if (isMoving) {
       const scale = 1 + Math.sin(Date.now() * 0.008) * 0.05;
@@ -185,56 +306,111 @@ const DoorComponent = ({
 
   if (!isVisible) return null;
 
-  const hingeOffset = side === 'left' ? -0.4 : 0.4;
+  const zPos = side === 'left' ? 0.72 : -0.72;
+  const isFront = doorPosition === 'front';
 
   return (
-    <group
-      ref={meshRef}
-      position={position}
-    >
-      {/* Pivot point for door hinge */}
-      <group position={[hingeOffset, 0, 0]}>
+    <group ref={meshRef} position={position}>
+      {/* Pivot at door hinge */}
+      <group 
+        ref={pivotRef}
+        position={[isFront ? 0.28 : -0.25, 0, zPos]}
+        rotation={[rotationOffset[0], 0, rotationOffset[2]]}
+      >
         <mesh
-          position={[-hingeOffset, 0, 0]}
+          geometry={doorGeometry}
+          position={[0, 0, side === 'left' ? 0 : -0.04]}
+          rotation={[side === 'left' ? -Math.PI / 2 : Math.PI / 2, 0, 0]}
           onClick={(e) => { e.stopPropagation(); onClick(); }}
           onDoubleClick={(e) => { e.stopPropagation(); onDoubleClick(); }}
           onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
           onPointerOut={() => { document.body.style.cursor = 'auto'; }}
         >
-          <boxGeometry args={[0.8, 0.55, 0.08]} />
           <meshStandardMaterial
             color={color}
-            metalness={0.8}
-            roughness={0.2}
-            emissive={isMoving ? '#22d3ee' : isSelected ? color : '#000000'}
-            emissiveIntensity={isMoving ? 0.5 : isSelected ? 0.3 : 0}
-          />
-        </mesh>
-        {/* Door window */}
-        <mesh position={[-hingeOffset, 0.3, 0]}>
-          <boxGeometry args={[0.6, 0.35, 0.06]} />
-          <meshStandardMaterial
-            color="#1e3a5f"
             metalness={0.9}
-            roughness={0.1}
-            transparent
-            opacity={0.5}
+            roughness={0.15}
+            emissive={isMoving ? '#22d3ee' : isSelected ? color : '#000000'}
+            emissiveIntensity={isMoving ? 0.4 : isSelected ? 0.2 : 0}
           />
         </mesh>
+        
+        {/* Door window */}
+        <mesh
+          position={[isFront ? 0.25 : 0.22, 0.42, side === 'left' ? 0.01 : -0.05]}
+          rotation={[side === 'left' ? -Math.PI / 2 : Math.PI / 2, 0, 0]}
+        >
+          <planeGeometry args={[isFront ? 0.38 : 0.35, 0.18]} />
+          <meshStandardMaterial
+            color="#1a2a3a"
+            metalness={0.95}
+            roughness={0.05}
+            transparent
+            opacity={0.8}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+
         {/* Door handle */}
-        <mesh position={[-hingeOffset + 0.2, 0, side === 'left' ? -0.06 : 0.06]}>
-          <boxGeometry args={[0.12, 0.04, 0.03]} />
-          <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.1} />
+        <mesh position={[isFront ? 0.35 : 0.3, 0.28, side === 'left' ? 0.05 : -0.09]}>
+          <boxGeometry args={[0.08, 0.025, 0.02]} />
+          <meshStandardMaterial color="#c0c0c0" metalness={0.95} roughness={0.1} />
         </mesh>
       </group>
     </group>
   );
 };
 
-// Trunk/Hood Component with opening animation
+// Hood/Trunk Component
 interface HatchProps extends CarPartProps {
   type: 'trunk' | 'hood';
 }
+
+const createHoodGeometry = () => {
+  const shape = new THREE.Shape();
+  shape.moveTo(0, 0);
+  shape.lineTo(0, 1.3);
+  shape.quadraticCurveTo(0.1, 1.35, 0.2, 1.35);
+  shape.lineTo(0.55, 1.3);
+  shape.quadraticCurveTo(0.6, 1.25, 0.6, 1.15);
+  shape.lineTo(0.65, 0.1);
+  shape.quadraticCurveTo(0.65, 0.02, 0.58, 0);
+  shape.lineTo(0, 0);
+
+  const extrudeSettings = {
+    steps: 1,
+    depth: 0.03,
+    bevelEnabled: true,
+    bevelThickness: 0.02,
+    bevelSize: 0.02,
+    bevelSegments: 2,
+  };
+
+  return new THREE.ExtrudeGeometry(shape, extrudeSettings);
+};
+
+const createTrunkGeometry = () => {
+  const shape = new THREE.Shape();
+  shape.moveTo(0, 0);
+  shape.lineTo(0, 1.3);
+  shape.quadraticCurveTo(0.1, 1.35, 0.2, 1.35);
+  shape.lineTo(0.4, 1.3);
+  shape.quadraticCurveTo(0.45, 1.25, 0.45, 1.15);
+  shape.lineTo(0.5, 0.1);
+  shape.quadraticCurveTo(0.5, 0.02, 0.43, 0);
+  shape.lineTo(0, 0);
+
+  const extrudeSettings = {
+    steps: 1,
+    depth: 0.03,
+    bevelEnabled: true,
+    bevelThickness: 0.02,
+    bevelSize: 0.02,
+    bevelSegments: 2,
+  };
+
+  return new THREE.ExtrudeGeometry(shape, extrudeSettings);
+};
 
 const HatchComponent = ({
   position,
@@ -252,8 +428,13 @@ const HatchComponent = ({
   type,
 }: HatchProps) => {
   const meshRef = useRef<THREE.Group>(null);
+  const pivotRef = useRef<THREE.Group>(null);
   const currentPos = useRef(new THREE.Vector3(...position));
   const currentOpenAngle = useRef(0);
+
+  const geometry = useMemo(() => 
+    type === 'hood' ? createHoodGeometry() : createTrunkGeometry(), 
+  [type]);
 
   const targetPos = useMemo(() => {
     const base = isExploded ? explodedPosition : position;
@@ -267,18 +448,12 @@ const HatchComponent = ({
   const targetOpenAngle = isOpen ? (type === 'hood' ? -Math.PI / 4 : Math.PI / 3) : 0;
 
   useFrame((_, delta) => {
-    if (!meshRef.current) return;
+    if (!meshRef.current || !pivotRef.current) return;
     currentPos.current.lerp(new THREE.Vector3(...targetPos), delta * 5);
     meshRef.current.position.copy(currentPos.current);
 
-    // Smooth opening animation
     currentOpenAngle.current += (targetOpenAngle - currentOpenAngle.current) * delta * 5;
-    
-    meshRef.current.rotation.set(
-      rotationOffset[0],
-      rotationOffset[1],
-      currentOpenAngle.current + rotationOffset[2]
-    );
+    pivotRef.current.rotation.z = currentOpenAngle.current + rotationOffset[2];
 
     if (isMoving) {
       const scale = 1 + Math.sin(Date.now() * 0.008) * 0.05;
@@ -293,25 +468,30 @@ const HatchComponent = ({
 
   if (!isVisible) return null;
 
-  const hingeOffset = type === 'hood' ? -0.4 : 0.4;
+  const hingeX = type === 'hood' ? 0.95 : -0.8;
 
   return (
     <group ref={meshRef} position={position}>
-      <group position={[hingeOffset, 0, 0]}>
+      <group 
+        ref={pivotRef}
+        position={[hingeX, 0.48, 0]}
+        rotation={[rotationOffset[0], rotationOffset[1], 0]}
+      >
         <mesh
-          position={[-hingeOffset, 0, 0]}
+          geometry={geometry}
+          position={type === 'hood' ? [0, 0, -0.65] : [-0.45, 0, -0.65]}
+          rotation={[0, 0, type === 'hood' ? -0.15 : 0.1]}
           onClick={(e) => { e.stopPropagation(); onClick(); }}
           onDoubleClick={(e) => { e.stopPropagation(); onDoubleClick(); }}
           onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
           onPointerOut={() => { document.body.style.cursor = 'auto'; }}
         >
-          <boxGeometry args={[0.8, 0.1, 1.4]} />
           <meshStandardMaterial
             color={color}
-            metalness={0.8}
-            roughness={0.2}
+            metalness={0.9}
+            roughness={0.15}
             emissive={isMoving ? '#22d3ee' : isSelected ? color : '#000000'}
-            emissiveIntensity={isMoving ? 0.5 : isSelected ? 0.3 : 0}
+            emissiveIntensity={isMoving ? 0.4 : isSelected ? 0.2 : 0}
           />
         </mesh>
       </group>
@@ -319,7 +499,7 @@ const HatchComponent = ({
   );
 };
 
-// Wheel Component with rotation
+// Wheel Component
 interface WheelProps extends CarPartProps {
   rotationSpeed?: number;
 }
@@ -336,9 +516,10 @@ const WheelComponent = ({
   positionOffset,
   rotationOffset,
   isVisible,
-  rotationSpeed = 1,
+  rotationSpeed = 2,
 }: WheelProps) => {
   const meshRef = useRef<THREE.Group>(null);
+  const wheelRef = useRef<THREE.Group>(null);
   const currentPos = useRef(new THREE.Vector3(...position));
 
   const targetPos = useMemo(() => {
@@ -351,13 +532,13 @@ const WheelComponent = ({
   }, [isExploded, explodedPosition, position, positionOffset]);
 
   useFrame((_, delta) => {
-    if (!meshRef.current) return;
+    if (!meshRef.current || !wheelRef.current) return;
     currentPos.current.lerp(new THREE.Vector3(...targetPos), delta * 5);
     meshRef.current.position.copy(currentPos.current);
 
     // Rotate wheel when not exploded
     if (!isExploded) {
-      meshRef.current.rotation.z += rotationSpeed * delta;
+      wheelRef.current.rotation.x += rotationSpeed * delta;
     }
 
     if (isMoving) {
@@ -377,39 +558,57 @@ const WheelComponent = ({
     <group
       ref={meshRef}
       position={position}
-      rotation={[Math.PI / 2 + rotationOffset[0], rotationOffset[1], rotationOffset[2]]}
+      rotation={[rotationOffset[0], rotationOffset[1], rotationOffset[2]]}
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       onDoubleClick={(e) => { e.stopPropagation(); onDoubleClick(); }}
       onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
       onPointerOut={() => { document.body.style.cursor = 'auto'; }}
     >
-      {/* Tire */}
-      <mesh>
-        <cylinderGeometry args={[0.35, 0.35, 0.25, 24]} />
-        <meshStandardMaterial
-          color="#1a1a2e"
-          metalness={0.3}
-          roughness={0.8}
-          emissive={isMoving ? '#22d3ee' : isSelected ? '#333' : '#000000'}
-          emissiveIntensity={isMoving ? 0.3 : isSelected ? 0.2 : 0}
-        />
-      </mesh>
-      {/* Rim */}
-      <mesh>
-        <cylinderGeometry args={[0.22, 0.22, 0.27, 12]} />
-        <meshStandardMaterial
-          color={color}
-          metalness={0.9}
-          roughness={0.1}
-          emissive={isMoving ? '#22d3ee' : isSelected ? color : '#000000'}
-          emissiveIntensity={isMoving ? 0.5 : isSelected ? 0.3 : 0}
-        />
-      </mesh>
-      {/* Hub cap */}
-      <mesh position={[0, 0.14, 0]}>
-        <cylinderGeometry args={[0.08, 0.08, 0.02, 8]} />
-        <meshStandardMaterial color="#94a3b8" metalness={0.95} roughness={0.05} />
-      </mesh>
+      <group ref={wheelRef} rotation={[0, 0, Math.PI / 2]}>
+        {/* Tire */}
+        <mesh>
+          <torusGeometry args={[0.28, 0.1, 16, 32]} />
+          <meshStandardMaterial
+            color="#1a1a1a"
+            metalness={0.1}
+            roughness={0.9}
+            emissive={isMoving ? '#22d3ee' : isSelected ? '#333' : '#000000'}
+            emissiveIntensity={isMoving ? 0.2 : isSelected ? 0.1 : 0}
+          />
+        </mesh>
+        
+        {/* Rim */}
+        <mesh>
+          <cylinderGeometry args={[0.2, 0.2, 0.12, 24]} />
+          <meshStandardMaterial
+            color={color}
+            metalness={0.95}
+            roughness={0.05}
+            emissive={isMoving ? '#22d3ee' : isSelected ? color : '#000000'}
+            emissiveIntensity={isMoving ? 0.4 : isSelected ? 0.2 : 0}
+          />
+        </mesh>
+
+        {/* Rim spokes */}
+        {[0, 1, 2, 3, 4].map((i) => (
+          <mesh key={i} rotation={[0, (i * Math.PI * 2) / 5, 0]} position={[0, 0.07, 0]}>
+            <boxGeometry args={[0.04, 0.02, 0.16]} />
+            <meshStandardMaterial color="#888888" metalness={0.9} roughness={0.1} />
+          </mesh>
+        ))}
+
+        {/* Center cap */}
+        <mesh position={[0, 0.07, 0]}>
+          <cylinderGeometry args={[0.05, 0.05, 0.02, 16]} />
+          <meshStandardMaterial color="#555555" metalness={0.95} roughness={0.1} />
+        </mesh>
+
+        {/* Brake disc visible through rim */}
+        <mesh position={[0, -0.02, 0]}>
+          <cylinderGeometry args={[0.15, 0.15, 0.02, 24]} />
+          <meshStandardMaterial color="#444444" metalness={0.7} roughness={0.3} />
+        </mesh>
+      </group>
     </group>
   );
 };
@@ -429,77 +628,77 @@ export const machineComponents: ComponentData[] = [
   {
     id: 'car-body',
     name: 'Car Body',
-    position: [0, 0.3, 0],
-    explodedPosition: [0, 0.3, 0],
-    color: '#3b82f6',
-    description: 'Main unibody chassis with integrated cabin structure',
+    position: [0, 0.18, 0],
+    explodedPosition: [0, 0.18, 0],
+    color: '#2563eb',
+    description: 'Unibody monocoque chassis with crumple zones',
     type: 'body',
   },
   {
     id: 'door-front-left',
     name: 'Front Left Door',
-    position: [0.3, 0.25, 0.8],
-    explodedPosition: [0.3, 0.25, 2.5],
-    color: '#3b82f6',
-    description: 'Driver side front door with power window',
+    position: [0, 0.18, 0],
+    explodedPosition: [0, 0.18, 1.8],
+    color: '#2563eb',
+    description: 'Driver door with side impact protection',
     type: 'door',
     props: { side: 'left', doorPosition: 'front' },
   },
   {
     id: 'door-front-right',
     name: 'Front Right Door',
-    position: [0.3, 0.25, -0.8],
-    explodedPosition: [0.3, 0.25, -2.5],
-    color: '#3b82f6',
-    description: 'Passenger side front door with power window',
+    position: [0, 0.18, 0],
+    explodedPosition: [0, 0.18, -1.8],
+    color: '#2563eb',
+    description: 'Passenger door with power window',
     type: 'door',
     props: { side: 'right', doorPosition: 'front' },
   },
   {
     id: 'door-rear-left',
     name: 'Rear Left Door',
-    position: [-0.5, 0.25, 0.8],
-    explodedPosition: [-0.5, 0.25, 2.5],
-    color: '#3b82f6',
-    description: 'Rear passenger left door',
+    position: [0, 0.18, 0],
+    explodedPosition: [0, 0.18, 1.8],
+    color: '#2563eb',
+    description: 'Rear passenger door with child lock',
     type: 'door',
     props: { side: 'left', doorPosition: 'rear' },
   },
   {
     id: 'door-rear-right',
     name: 'Rear Right Door',
-    position: [-0.5, 0.25, -0.8],
-    explodedPosition: [-0.5, 0.25, -2.5],
-    color: '#3b82f6',
-    description: 'Rear passenger right door',
+    position: [0, 0.18, 0],
+    explodedPosition: [0, 0.18, -1.8],
+    color: '#2563eb',
+    description: 'Rear passenger door with child lock',
     type: 'door',
     props: { side: 'right', doorPosition: 'rear' },
   },
   {
     id: 'hood',
     name: 'Hood',
-    position: [1.35, 0.35, 0],
-    explodedPosition: [2.8, 1.2, 0],
-    color: '#3b82f6',
-    description: 'Engine compartment hood with hydraulic struts',
+    position: [0, 0.18, 0],
+    explodedPosition: [2.2, 1.0, 0],
+    color: '#2563eb',
+    description: 'Aluminum hood with hydraulic struts',
     type: 'hatch',
     props: { type: 'hood' },
   },
   {
     id: 'trunk',
     name: 'Trunk',
-    position: [-1.35, 0.35, 0],
-    explodedPosition: [-2.8, 1.2, 0],
-    color: '#3b82f6',
-    description: 'Rear cargo trunk with power liftgate',
+    position: [0, 0.18, 0],
+    explodedPosition: [-2.2, 1.0, 0],
+    color: '#2563eb',
+    description: 'Rear trunk with power liftgate',
     type: 'hatch',
     props: { type: 'trunk' },
   },
   {
     id: 'wheel-front-left',
     name: 'Front Left Wheel',
-    position: [1.1, -0.05, 0.85],
-    explodedPosition: [2, -0.05, 2],
+    position: [1.15, 0.18, 0.78],
+    explodedPosition: [1.8, 0.18, 1.8],
     color: '#94a3b8',
     description: '18" alloy wheel with performance tire',
     type: 'wheel',
@@ -507,8 +706,8 @@ export const machineComponents: ComponentData[] = [
   {
     id: 'wheel-front-right',
     name: 'Front Right Wheel',
-    position: [1.1, -0.05, -0.85],
-    explodedPosition: [2, -0.05, -2],
+    position: [1.15, 0.18, -0.78],
+    explodedPosition: [1.8, 0.18, -1.8],
     color: '#94a3b8',
     description: '18" alloy wheel with performance tire',
     type: 'wheel',
@@ -516,8 +715,8 @@ export const machineComponents: ComponentData[] = [
   {
     id: 'wheel-rear-left',
     name: 'Rear Left Wheel',
-    position: [-1.1, -0.05, 0.85],
-    explodedPosition: [-2, -0.05, 2],
+    position: [-1.15, 0.18, 0.78],
+    explodedPosition: [-1.8, 0.18, 1.8],
     color: '#94a3b8',
     description: '18" alloy wheel with performance tire',
     type: 'wheel',
@@ -525,8 +724,8 @@ export const machineComponents: ComponentData[] = [
   {
     id: 'wheel-rear-right',
     name: 'Rear Right Wheel',
-    position: [-1.1, -0.05, -0.85],
-    explodedPosition: [-2, -0.05, -2],
+    position: [-1.15, 0.18, -0.78],
+    explodedPosition: [-1.8, 0.18, -1.8],
     color: '#94a3b8',
     description: '18" alloy wheel with performance tire',
     type: 'wheel',
