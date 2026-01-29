@@ -12,6 +12,7 @@ interface GearProps {
   onClick: () => void;
   onDoubleClick: () => void;
   positionOffset: [number, number, number];
+  rotationOffset: [number, number, number];
   wearLevel?: number;
   isVisible: boolean;
   radius?: number;
@@ -106,6 +107,7 @@ const GearComponent = ({
   onClick,
   onDoubleClick,
   positionOffset,
+  rotationOffset,
   wearLevel = 0,
   isVisible,
   radius = 1,
@@ -170,7 +172,11 @@ const GearComponent = ({
       ref={meshRef}
       geometry={geometry}
       position={position}
-      rotation={[Math.PI / 2, 0, 0]}
+      rotation={[
+        Math.PI / 2 + rotationOffset[0],
+        rotationOffset[1],
+        rotationOffset[2]
+      ]}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
@@ -208,6 +214,7 @@ interface ShaftProps {
   onClick: () => void;
   onDoubleClick: () => void;
   positionOffset: [number, number, number];
+  rotationOffset: [number, number, number];
   isVisible: boolean;
   length?: number;
   radius?: number;
@@ -223,6 +230,7 @@ const ShaftComponent = ({
   onClick,
   onDoubleClick,
   positionOffset,
+  rotationOffset,
   isVisible,
   length = 2,
   radius = 0.1,
@@ -263,7 +271,11 @@ const ShaftComponent = ({
     <mesh
       ref={meshRef}
       position={position}
-      rotation={[Math.PI / 2, 0, 0]}
+      rotation={[
+        Math.PI / 2 + rotationOffset[0],
+        rotationOffset[1],
+        rotationOffset[2]
+      ]}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
@@ -298,6 +310,7 @@ interface HousingProps {
   onClick: () => void;
   onDoubleClick: () => void;
   positionOffset: [number, number, number];
+  rotationOffset: [number, number, number];
   isVisible: boolean;
 }
 
@@ -311,6 +324,7 @@ const HousingComponent = ({
   onClick,
   onDoubleClick,
   positionOffset,
+  rotationOffset,
   isVisible,
 }: HousingProps) => {
   const meshRef = useRef<THREE.Group>(null);
@@ -347,6 +361,7 @@ const HousingComponent = ({
     <group
       ref={meshRef}
       position={position}
+      rotation={[rotationOffset[0], rotationOffset[1], rotationOffset[2]]}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
@@ -402,6 +417,7 @@ interface GearMachineProps {
   movingComponent: string | null;
   onDoubleClick: (id: string) => void;
   componentOffsets: Record<string, [number, number, number]>;
+  componentRotations: Record<string, [number, number, number]>;
 }
 
 export const machineComponents: ComponentData[] = [
@@ -494,6 +510,7 @@ const GearMachine = ({
   movingComponent,
   onDoubleClick,
   componentOffsets,
+  componentRotations,
 }: GearMachineProps) => {
   const groupRef = useRef<THREE.Group>(null);
 
@@ -511,6 +528,7 @@ const GearMachine = ({
           onClick: () => onSelectComponent(selectedComponent === component.id ? null : component.id),
           onDoubleClick: () => onDoubleClick(component.id),
           positionOffset: componentOffsets[component.id] || [0, 0, 0] as [number, number, number],
+          rotationOffset: componentRotations[component.id] || [0, 0, 0] as [number, number, number],
           isVisible: visibleComponents[component.id] !== false,
         };
 

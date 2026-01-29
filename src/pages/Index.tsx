@@ -27,6 +27,9 @@ const Index = () => {
   // Custom position offsets for components
   const [componentOffsets, setComponentOffsets] = useState<Record<string, [number, number, number]>>({});
   
+  // Custom rotation offsets for components
+  const [componentRotations, setComponentRotations] = useState<Record<string, [number, number, number]>>({});
+  
   // Initialize wear levels for gear components
   const [componentWear, setComponentWear] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = {};
@@ -51,65 +54,117 @@ const Index = () => {
     setSelectedComponent(id);
   }, []);
 
-  // Handle keyboard movement
+  // Handle keyboard movement and rotation
   useEffect(() => {
     if (!movingComponent) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      const step = e.shiftKey ? 0.5 : 0.1; // Larger steps with shift
+      const moveStep = e.shiftKey ? 0.5 : 0.1;
+      const rotateStep = e.shiftKey ? 0.3 : 0.1;
       const currentOffset = componentOffsets[movingComponent] || [0, 0, 0];
+      const currentRotation = componentRotations[movingComponent] || [0, 0, 0];
       let newOffset: [number, number, number] = [...currentOffset];
+      let newRotation: [number, number, number] = [...currentRotation];
+      let changed = false;
 
       switch (e.key) {
+        // Position controls (Arrow keys)
         case 'ArrowLeft':
-          newOffset[0] -= step;
+          newOffset[0] -= moveStep;
+          changed = true;
           e.preventDefault();
           break;
         case 'ArrowRight':
-          newOffset[0] += step;
+          newOffset[0] += moveStep;
+          changed = true;
           e.preventDefault();
           break;
         case 'ArrowUp':
           if (e.ctrlKey || e.metaKey) {
-            // Move in Z axis with Ctrl/Cmd
-            newOffset[2] -= step;
+            newOffset[2] -= moveStep;
           } else {
-            // Move in Y axis
-            newOffset[1] += step;
+            newOffset[1] += moveStep;
           }
+          changed = true;
           e.preventDefault();
           break;
         case 'ArrowDown':
           if (e.ctrlKey || e.metaKey) {
-            // Move in Z axis with Ctrl/Cmd
-            newOffset[2] += step;
+            newOffset[2] += moveStep;
           } else {
-            // Move in Y axis
-            newOffset[1] -= step;
+            newOffset[1] -= moveStep;
           }
+          changed = true;
           e.preventDefault();
           break;
+        
+        // Rotation controls (Q/E for Z, W/S for X, A/D for Y)
+        case 'q':
+        case 'Q':
+          newRotation[2] -= rotateStep;
+          changed = true;
+          e.preventDefault();
+          break;
+        case 'e':
+        case 'E':
+          newRotation[2] += rotateStep;
+          changed = true;
+          e.preventDefault();
+          break;
+        case 'w':
+        case 'W':
+          newRotation[0] -= rotateStep;
+          changed = true;
+          e.preventDefault();
+          break;
+        case 's':
+        case 'S':
+          newRotation[0] += rotateStep;
+          changed = true;
+          e.preventDefault();
+          break;
+        case 'a':
+        case 'A':
+          newRotation[1] -= rotateStep;
+          changed = true;
+          e.preventDefault();
+          break;
+        case 'd':
+        case 'D':
+          newRotation[1] += rotateStep;
+          changed = true;
+          e.preventDefault();
+          break;
+          
         case 'Escape':
           setMovingComponent(null);
           break;
         case 'r':
         case 'R':
-          // Reset position
+          // Reset position and rotation
           newOffset = [0, 0, 0];
+          newRotation = [0, 0, 0];
+          changed = true;
           break;
         default:
           return;
       }
 
-      setComponentOffsets(prev => ({
-        ...prev,
-        [movingComponent]: newOffset
-      }));
+      if (changed) {
+        setComponentOffsets(prev => ({
+          ...prev,
+          [movingComponent]: newOffset
+        }));
+        setComponentRotations(prev => ({
+          ...prev,
+          [movingComponent]: newRotation
+        }));
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [movingComponent, componentOffsets]);
+  }, [movingComponent, componentOffsets, componentRotations]);
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-background grid-pattern">
@@ -135,6 +190,7 @@ const Index = () => {
             movingComponent={movingComponent}
             onDoubleClick={handleDoubleClick}
             componentOffsets={componentOffsets}
+            componentRotations={componentRotations}
           />
         </Suspense>
       </motion.div>
@@ -159,11 +215,17 @@ const Index = () => {
             </div>
           </div>
           <div className="text-xs text-muted-foreground space-y-1">
+            <p className="font-medium text-foreground mb-2">Position:</p>
             <p><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">←→</kbd> Move X axis</p>
             <p><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">↑↓</kbd> Move Y axis</p>
             <p><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">Ctrl+↑↓</kbd> Move Z axis</p>
+            <p className="font-medium text-foreground mt-3 mb-2">Rotation:</p>
+            <p><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">Q/E</kbd> Rotate Z axis</p>
+            <p><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">W/S</kbd> Rotate X axis</p>
+            <p><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">A/D</kbd> Rotate Y axis</p>
+            <p className="font-medium text-foreground mt-3 mb-2">Other:</p>
             <p><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">Shift</kbd> Faster movement</p>
-            <p><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">R</kbd> Reset position</p>
+            <p><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">R</kbd> Reset position & rotation</p>
             <p><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">Esc</kbd> Exit moving mode</p>
           </div>
         </motion.div>
